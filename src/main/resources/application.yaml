@@ -3,9 +3,9 @@ spring:
     name: psyke
 
   datasource:
-    url: jdbc:postgresql://localhost:5432/psyke_master
-    username: postgres
-    password: postgres
+    url: ${PSYKE_DB_URL:jdbc:postgresql://localhost:5432/psyke_master}
+    username: ${PSYKE_DB_USER:postgres}
+    password: ${PSYKE_DB_PASS:postgres}
 
   jpa:
     hibernate:
@@ -19,5 +19,5 @@ spring:
 
 app:
   jwt:
-    secret: CHANGE_ME_CHANGE_ME_CHANGE_ME_CHANGE_ME_CHANGE_ME_CHANGE_ME_CHANGE_ME
-    expiration-ms: 900000
+    secret: ${PSYKE_JWT_SECRET:CHANGE_ME_CHANGE_ME_CHANGE_ME_CHANGE_ME_CHANGE_ME_CHANGE_ME_CHANGE_ME}
+    expiration-ms: ${PSYKE_JWT_EXPIRATION_MS:900000}
