@@ -2,34 +2,31 @@ package com.br.psyke.psyke.model;
 
 import jakarta.persistence.*;
 import lombok.*;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Entity
-@Table(name = "rooms")
+@Table(name = "recurrence_rules")
 @Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
-public class Room {
+public class RecurrenceRule {
 
     @Id @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
-    @Column(name = "clinic_id", nullable = false)
-    private UUID clinicId;
+    @Column(name = "appointment_id", nullable = false)
+    private UUID appointmentId;
 
-    @Column(nullable = false, length = 200)
-    private String name;
+    @Column(nullable = false, length = 20)
+    private String freq;
 
-    @Column(length = 50)
-    private String color;
+    @Column(name = "interval_val", nullable = false)
+    private int interval;
 
-    @Column(nullable = false)
-    @Builder.Default
-    private int capacity = 1;
+    private Integer count;
 
-    @Column(nullable = false, length = 30)
-    @Enumerated(EnumType.STRING)
-    @Builder.Default
-    private RoomType type = RoomType.PHYSICAL;
+    @Column(name = "until_date")
+    private LocalDate until;
 
     @Column(nullable = false)
     private boolean active;
@@ -40,8 +37,8 @@ public class Room {
     @PrePersist
     protected void onCreate() {
         createdAt = LocalDateTime.now();
-        if (!active) active = true;
+        if (freq == null) freq = "WEEKLY";
+        if (interval <= 0) interval = 1;
+        active = true;
     }
-
-    public enum RoomType { PHYSICAL, VIRTUAL }
 }

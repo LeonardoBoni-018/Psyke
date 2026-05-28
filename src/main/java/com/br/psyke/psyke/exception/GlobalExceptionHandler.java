@@ -30,6 +30,11 @@ public class GlobalExceptionHandler {
         return build(HttpStatus.UNAUTHORIZED, ex.getMessage(), req);
     }
 
+    @ExceptionHandler(SlotConflictException.class)
+    public ResponseEntity<ErrorResponse> handle(SlotConflictException ex, WebRequest req) {
+        return build(HttpStatus.CONFLICT, ex.getMessage(), req);
+    }
+
     @ExceptionHandler(TenantAlreadyExistsException.class)
     public ResponseEntity<ErrorResponse> handle(TenantAlreadyExistsException ex, WebRequest req) {
         return build(HttpStatus.CONFLICT, ex.getMessage(), req);

@@ -2,6 +2,21 @@ spring:
   application:
     name: psyke
 
+  kafka:
+    bootstrap-servers: ${PSYKE_KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+      properties:
+        spring.json.type.mapping: "appointment-event:com.br.psyke.psyke.event.AppointmentEvent"
+    consumer:
+      group-id: psyke-waiting-list
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+      properties:
+        spring.json.type.mapping: "appointment-event:com.br.psyke.psyke.event.AppointmentEvent"
+        spring.json.trusted.packages: "*"
+
   datasource:
     url: ${PSYKE_DB_URL:jdbc:postgresql://localhost:5432/psyke_master}
     username: ${PSYKE_DB_USER:postgres}
