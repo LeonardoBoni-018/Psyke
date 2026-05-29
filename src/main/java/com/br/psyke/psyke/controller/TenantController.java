@@ -7,6 +7,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/tenants")
@@ -18,5 +19,10 @@ public class TenantController {
     @PostMapping
     public ResponseEntity<TenantResponse> create(@Valid @RequestBody CreateTenantRequest r) {
         return ResponseEntity.status(HttpStatus.CREATED).body(svc.createTenant(r));
+    }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<TenantResponse> getById(@PathVariable UUID id) {
+        return ResponseEntity.ok(svc.getTenant(id));
     }
 }

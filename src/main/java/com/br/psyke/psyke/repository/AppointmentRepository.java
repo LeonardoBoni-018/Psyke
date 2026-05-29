@@ -38,4 +38,18 @@ public interface AppointmentRepository extends JpaRepository<Appointment, UUID> 
 
     long countByProfessionalIdAndStartTimeBetweenAndStatusIn(
         UUID professionalId, LocalDateTime from, LocalDateTime to, List<Appointment.AppointmentStatus> statuses);
+
+    @Query(value = "SELECT * FROM appointments a WHERE " +
+           "(CAST(:professionalId AS uuid) IS NULL OR a.professional_id = CAST(:professionalId AS uuid)) AND " +
+           "(CAST(:patientId AS uuid) IS NULL OR a.patient_id = CAST(:patientId AS uuid)) AND " +
+           "(CAST(:status AS varchar) IS NULL OR a.status = CAST(:status AS varchar)) AND " +
+           "(CAST(:from AS timestamp) IS NULL OR a.start_time >= CAST(:from AS timestamp)) AND " +
+           "(CAST(:to AS timestamp) IS NULL OR a.end_time <= CAST(:to AS timestamp)) " +
+           "ORDER BY a.start_time", nativeQuery = true)
+    List<Appointment> findAllByFilters(
+        @Param("professionalId") UUID professionalId,
+        @Param("patientId") UUID patientId,
+        @Param("status") Appointment.AppointmentStatus status,
+        @Param("from") LocalDateTime from,
+        @Param("to") LocalDateTime to);
 }

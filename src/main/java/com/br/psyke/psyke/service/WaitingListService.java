@@ -107,6 +107,15 @@ public class WaitingListService {
         }
     }
 
+    @Transactional
+    public void remove(UUID id) {
+        var entry = repo.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Waiting list entry not found"));
+        if (entry.getStatus() != WaitingList.WaitingStatus.WAITING)
+            throw new SlotConflictException("Only WAITING entries can be removed (current: " + entry.getStatus() + ")");
+        repo.delete(entry);
+    }
+
     public List<WaitingListResponse> listByProfessional(UUID professionalId) {
         return repo.findByProfessionalIdOrderByPriorityDescRequestedAtAsc(professionalId)
                 .stream().map(this::toResponse).toList();

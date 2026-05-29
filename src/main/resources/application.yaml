@@ -8,19 +8,19 @@ spring:
       key-serializer: org.apache.kafka.common.serialization.StringSerializer
       value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
       properties:
-        spring.json.type.mapping: "appointment-event:com.br.psyke.psyke.event.AppointmentEvent"
+        spring.json.type.mapping: "appointment-event:com.br.psyke.psyke.event.AppointmentEvent,session-event:com.br.psyke.psyke.event.SessionEvent"
     consumer:
       group-id: psyke-waiting-list
       key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
       value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
       properties:
-        spring.json.type.mapping: "appointment-event:com.br.psyke.psyke.event.AppointmentEvent"
+        spring.json.type.mapping: "appointment-event:com.br.psyke.psyke.event.AppointmentEvent,session-event:com.br.psyke.psyke.event.SessionEvent"
         spring.json.trusted.packages: "*"
 
   datasource:
     url: ${PSYKE_DB_URL:jdbc:postgresql://localhost:5432/psyke_master}
     username: ${PSYKE_DB_USER:postgres}
-    password: ${PSYKE_DB_PASS:postgres}
+    password: ${PSYKE_DB_PASS:123456}
 
   jpa:
     hibernate:
@@ -28,9 +28,11 @@ spring:
     open-in-view: false
     properties:
       hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect   # ← LINHA 1: diz ao Hibernate qual banco é, sem precisar conectar
         jdbc:
           lob:
             non_contextual_creation: true
+    defer-datasource-initialization: true                  # ← LINHA 2: garante que o Flyway roda antes do JPA validar
 
 app:
   jwt:

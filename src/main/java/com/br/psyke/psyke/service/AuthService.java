@@ -5,6 +5,7 @@ import com.br.psyke.psyke.exception.*;
 import com.br.psyke.psyke.model.*;
 import com.br.psyke.psyke.repository.*;
 import com.br.psyke.psyke.security.*;
+import jakarta.annotation.Resource;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.flywaydb.core.Flyway;
@@ -13,6 +14,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import javax.sql.DataSource;
+import java.sql.SQLException;
 import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.UUID;
@@ -29,7 +31,8 @@ public class AuthService {
     private final JwtService jwt;
     private final PasswordEncoder encoder;
     private final TenantAwareDataSource ds;
-    private final DataSource master;
+    @Resource(name = "master")
+    private DataSource master;
 
     @Value("${spring.datasource.url}")     private String url;
     @Value("${spring.datasource.username}") private String dbUser;
@@ -93,6 +96,12 @@ public class AuthService {
         refreshTokens.findByToken(token).ifPresent(rt -> { rt.setRevoked(true); });
     }
 
+    public TenantResponse getTenant(UUID id) {
+        var t = tenants.findById(id).orElseThrow(() -> new ResourceNotFoundException("Tenant not found"));
+        return new TenantResponse(t.getId().toString(), t.getName(), t.getSlug(),
+                t.getSchemaName(), t.getPlan().name(), t.getCreatedAt().toString());
+    }
+
     public UserResponse me(UUID id) {
         var u = users.findByIdWithRoles(id).orElseThrow(() -> new ResourceNotFoundException("User not found"));
         return new UserResponse(u.getId().toString(), u.getFullName(), u.getEmail(), u.getCpf(), u.getPhone(),
@@ -108,8 +117,23 @@ public class AuthService {
     private void createAdmin(Tenant t, String email, String pass, String name) {
         var role = roles.findByName("ROLE_ADMIN").orElseGet(() ->
                 roles.save(Role.builder().name("ROLE_ADMIN").description("Administrator").build()));
-        users.save(User.builder().tenantId(t.getId()).fullName(name).email(email)
+        var user = users.save(User.builder().tenantId(t.getId()).fullName(name).email(email)
                 .passwordHash(encoder.encode(pass)).active(true).emailVerified(true)
                 .roles(java.util.Set.of(role)).build());
+
+        var schema = t.getSchemaName();
+        try (var conn = master.getConnection();
+             var stmt = conn.prepareStatement(
+                     "INSERT INTO " + schema + ".clinics (name, active) VALUES (?, ?) RETURNING id")) {
+            stmt.setString(1, "Default Clinic");
+            stmt.setBoolean(2, true);
+            var rs = stmt.executeQuery();
+            if (rs.next()) {
+                user.setClinicId(rs.getObject("id", UUID.class));
+                users.save(user);
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException("Failed to create default clinic", e);
+        }
     }
 }

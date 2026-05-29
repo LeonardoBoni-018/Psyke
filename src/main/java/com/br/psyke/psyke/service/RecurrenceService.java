@@ -11,6 +11,7 @@ import com.br.psyke.psyke.repository.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
@@ -111,29 +112,108 @@ public class RecurrenceService {
         return responses;
     }
 
-    private List<LocalDateTime> generateOccurrences(RecurrenceRequest req) {
-        var results = new ArrayList<LocalDateTime>();
-        var freq = req.freq() != null ? req.freq() : "WEEKLY";
-        var interval = req.interval() != null ? req.interval() : 1;
-        var count = req.count() != null ? req.count() : Integer.MAX_VALUE;
-        var until = req.until() != null ? req.until().atStartOfDay() : req.startTime().plusWeeks(MAX_WEEKS);
-        var maxTime = req.startTime().plusWeeks(MAX_WEEKS);
-        var effectiveUntil = until.isAfter(maxTime) ? maxTime : until;
+    @Transactional
+    public List<AppointmentResponse> createRecurrenceForAppointment(UUID appointmentId, String freq, Integer interval, Integer count, LocalDate until) {
+        var source = appointmentRepo.findById(appointmentId)
+                .orElseThrow(() -> new ResourceNotFoundException("Appointment not found"));
 
-        var current = req.startTime();
+        var start = source.getStartTime();
+        var end = source.getEndTime();
+        var duration = ChronoUnit.MINUTES.between(start, end);
+        if (duration <= 0) throw new IllegalArgumentException("Invalid appointment duration");
+
+        var occurrences = generateOccurrences(start, duration, freq, interval, count, until);
+        var responses = new ArrayList<AppointmentResponse>();
+        var ruleSaved = false;
+
+        for (var occStart : occurrences) {
+            if (occStart.equals(start)) continue;
+            var occEnd = occStart.plusMinutes(duration);
+
+            var slotFree = slotRepo.existsByProfessionalIdAndStartTimeAndStatus(
+                    source.getProfessionalId(), occStart, Slot.SlotStatus.FREE);
+            if (!slotFree) continue;
+
+            var profConflicts = appointmentRepo.findConflictingByProfessional(
+                    source.getProfessionalId(), occStart, occEnd);
+            if (!profConflicts.isEmpty()) continue;
+
+            if (source.getRoomId() != null) {
+                var roomConflicts = appointmentRepo.findConflictingByRoom(
+                        source.getRoomId(), occStart, occEnd);
+                if (!roomConflicts.isEmpty()) continue;
+            }
+
+            var appointment = Appointment.builder()
+                    .clinicId(source.getClinicId())
+                    .patientId(source.getPatientId())
+                    .professionalId(source.getProfessionalId())
+                    .roomId(source.getRoomId())
+                    .startTime(occStart)
+                    .endTime(occEnd)
+                    .status(Appointment.AppointmentStatus.SCHEDULED)
+                    .notes(source.getNotes())
+                    .build();
+            appointment = appointmentRepo.save(appointment);
+
+            var slots = slotRepo.findByProfessionalIdAndStartTimeBetweenOrderByStartTime(
+                    source.getProfessionalId(), occStart, occEnd);
+            for (var s : slots) {
+                s.setStatus(Slot.SlotStatus.BOOKED);
+                s.setPatientId(source.getPatientId());
+                s.setRoomId(source.getRoomId());
+            }
+            slotRepo.saveAll(slots);
+
+            eventProducer.publish(new AppointmentEvent("scheduled", appointment.getId(),
+                    appointment.getClinicId(), appointment.getPatientId(),
+                    appointment.getProfessionalId(), appointment.getRoomId(),
+                    occStart.toString(), occEnd.toString(),
+                    appointment.getStatus().name(), LocalDateTime.now()));
+
+            if (!ruleSaved) {
+                ruleRepo.save(RecurrenceRule.builder()
+                        .appointmentId(source.getId())
+                        .freq(freq != null ? freq : "WEEKLY")
+                        .interval(interval != null ? interval : 1)
+                        .count(count != null ? count : occurrences.size())
+                        .until(until)
+                        .build());
+                ruleSaved = true;
+            }
+
+            responses.add(toResponse(appointment));
+        }
+
+        if (responses.isEmpty() && !ruleSaved)
+            throw new SlotConflictException("No available slots for the recurring schedule");
+        return responses;
+    }
+
+    private List<LocalDateTime> generateOccurrences(LocalDateTime startTime, long durationMinutes, String freq, Integer interval, Integer count, LocalDate until) {
+        var results = new ArrayList<LocalDateTime>();
+        var f = freq != null ? freq : "WEEKLY";
+        var inv = interval != null ? interval : 1;
+        var cnt = count != null ? count : Integer.MAX_VALUE;
+        var effectiveUntil = until != null ? until.atStartOfDay() : startTime.plusWeeks(MAX_WEEKS);
+        var maxTime = startTime.plusWeeks(MAX_WEEKS);
+        if (effectiveUntil.isAfter(maxTime)) effectiveUntil = maxTime;
+
+        var current = startTime;
         var generated = 0;
 
-        while (generated < count && !current.isAfter(effectiveUntil)) {
+        while (generated < cnt && !current.isAfter(effectiveUntil)) {
             results.add(current);
             generated++;
-            if ("WEEKLY".equalsIgnoreCase(freq)) {
-                current = current.plusWeeks(interval);
-            } else {
-                current = current.plusWeeks(interval);
-            }
+            current = current.plusWeeks(inv);
         }
 
         return results;
+    }
+
+    private List<LocalDateTime> generateOccurrences(RecurrenceRequest req) {
+        var duration = ChronoUnit.MINUTES.between(req.startTime(), req.endTime());
+        return generateOccurrences(req.startTime(), duration, req.freq(), req.interval(), req.count(), req.until());
     }
 
     private AppointmentResponse toResponse(Appointment a) {

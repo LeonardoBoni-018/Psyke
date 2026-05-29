@@ -28,7 +28,8 @@ public class TenantAwareDataSource extends AbstractRoutingDataSource {
     public synchronized void addTenantDataSource(String tenantId, String schema, String url, String user, String pass) {
         if (dataSources.containsKey(tenantId)) return;
         var ds = new HikariDataSource();
-        ds.setJdbcUrl(url + "&currentSchema=" + schema);
+        ds.setJdbcUrl(url);
+        ds.setConnectionInitSql("SET search_path TO " + schema + ", public");
         ds.setUsername(user);
         ds.setPassword(pass);
         ds.setPoolName("pool-" + tenantId);

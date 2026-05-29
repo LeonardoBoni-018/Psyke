@@ -7,10 +7,8 @@ import org.springframework.boot.resttestclient.TestRestTemplate;
 import org.springframework.boot.resttestclient.autoconfigure.AutoConfigureTestRestTemplate;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.HttpStatus;
-import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
-import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -19,7 +17,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 class PsykeApplicationTests {
 
     @Autowired private TestRestTemplate rest;
-    @MockitoBean private KafkaTemplate<?, ?> kafkaTemplate;
 
     @DynamicPropertySource
     static void props(DynamicPropertyRegistry r) {

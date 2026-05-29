@@ -2,6 +2,7 @@ package com.br.psyke.psyke;
 
 import com.br.psyke.psyke.dto.AppointmentRequest;
 import com.br.psyke.psyke.event.AppointmentEventProducer;
+import com.br.psyke.psyke.event.SessionEventProducer;
 import com.br.psyke.psyke.exception.ResourceNotFoundException;
 import com.br.psyke.psyke.exception.SlotConflictException;
 import com.br.psyke.psyke.model.*;
@@ -34,6 +35,7 @@ class AppointmentConflictTest {
     @Mock private UserRepository userRepo;
     @Mock private RoomRepository roomRepo;
     @Mock private AppointmentEventProducer eventProducer;
+    @Mock private SessionEventProducer sessionEventProducer;
     @Mock private CancellationLogService cancellationLogService;
     @Captor private ArgumentCaptor<Appointment> appointmentCaptor;
 
@@ -47,7 +49,7 @@ class AppointmentConflictTest {
     @BeforeEach
     void setUp() {
         encoder = new BCryptPasswordEncoder();
-        service = new AppointmentService(appointmentRepo, slotRepo, userRepo, roomRepo, eventProducer, cancellationLogService);
+        service = new AppointmentService(appointmentRepo, slotRepo, userRepo, roomRepo, eventProducer, sessionEventProducer, cancellationLogService);
 
         var clinicId = UUID.randomUUID();
         professional = User.builder().id(UUID.randomUUID()).clinicId(clinicId)

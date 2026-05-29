@@ -1,6 +1,6 @@
 package com.br.psyke.psyke.config;
 
-import lombok.RequiredArgsConstructor;
+import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
 import org.flywaydb.core.Flyway;
 import org.springframework.boot.CommandLineRunner;
@@ -10,10 +10,10 @@ import javax.sql.DataSource;
 
 @Slf4j
 @Configuration
-@RequiredArgsConstructor
 public class FlywayConfig {
 
-    private final DataSource master;
+    @Resource(name = "master")
+    private DataSource master;
 
     @Bean
     public CommandLineRunner migrate() {

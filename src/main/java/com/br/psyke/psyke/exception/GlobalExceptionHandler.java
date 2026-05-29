@@ -30,6 +30,11 @@ public class GlobalExceptionHandler {
         return build(HttpStatus.UNAUTHORIZED, ex.getMessage(), req);
     }
 
+    @ExceptionHandler(InvalidTransitionException.class)
+    public ResponseEntity<ErrorResponse> handle(InvalidTransitionException ex, WebRequest req) {
+        return build(HttpStatus.UNPROCESSABLE_CONTENT, ex.getMessage(), req);
+    }
+
     @ExceptionHandler(SlotConflictException.class)
     public ResponseEntity<ErrorResponse> handle(SlotConflictException ex, WebRequest req) {
         return build(HttpStatus.CONFLICT, ex.getMessage(), req);
@@ -37,6 +42,11 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(TenantAlreadyExistsException.class)
     public ResponseEntity<ErrorResponse> handle(TenantAlreadyExistsException ex, WebRequest req) {
+        return build(HttpStatus.CONFLICT, ex.getMessage(), req);
+    }
+
+    @ExceptionHandler(UserAlreadyExistsException.class)
+    public ResponseEntity<ErrorResponse> handle(UserAlreadyExistsException ex, WebRequest req) {
         return build(HttpStatus.CONFLICT, ex.getMessage(), req);
     }
 

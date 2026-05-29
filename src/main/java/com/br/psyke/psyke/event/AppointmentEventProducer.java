@@ -2,6 +2,7 @@ package com.br.psyke.psyke.event;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Component;
 
@@ -10,6 +11,7 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class AppointmentEventProducer {
 
+    @Qualifier("appointmentKafkaTemplate")
     private final KafkaTemplate<String, AppointmentEvent> kafka;
 
     public void publish(AppointmentEvent event) {

@@ -29,6 +29,12 @@ public class WaitingListController {
         return ResponseEntity.ok(service.listByProfessional(professionalId));
     }
 
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> remove(@PathVariable UUID id) {
+        service.remove(id);
+        return ResponseEntity.noContent().build();
+    }
+
     @PostMapping("/{id}/accept")
     public ResponseEntity<Void> acceptOffer(@PathVariable UUID id) {
         service.acceptOffer(id);
