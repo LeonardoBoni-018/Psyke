@@ -26,7 +26,7 @@ public class SecurityConfig {
                 .requestMatchers("/auth/login", "/auth/refresh").permitAll()
                 .requestMatchers(HttpMethod.POST, "/tenants").permitAll()
                 .requestMatchers("/confirm/**", "/cancel/**").permitAll()
-                .requestMatchers("/actuator/**", "/error", "/swagger-ui/**", "/v3/api-docs/**").permitAll()
+                .requestMatchers("/actuator/**", "/error", "/swagger-ui.html", "/swagger-ui/**", "/v3/api-docs/**").permitAll()
                 .anyRequest().authenticated())
             .addFilterBefore(filter, UsernamePasswordAuthenticationFilter.class)
             .build();

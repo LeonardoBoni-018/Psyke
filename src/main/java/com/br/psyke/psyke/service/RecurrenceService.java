@@ -30,6 +30,7 @@ public class RecurrenceService {
     private final UserRepository userRepo;
     private final RoomRepository roomRepo;
     private final AppointmentEventProducer eventProducer;
+    private final SlotEngine slotEngine;
 
     @Transactional
     public List<AppointmentResponse> createRecurring(RecurrenceRequest req) {
@@ -52,9 +53,10 @@ public class RecurrenceService {
         for (var start : occurrences) {
             var end = start.plusMinutes(duration);
 
-            var slotFree = slotRepo.existsByProfessionalIdAndStartTimeAndStatus(
-                    req.professionalId(), start, Slot.SlotStatus.FREE);
-            if (!slotFree) continue;
+            var date = start.toLocalDate();
+            var freeSlots = slotEngine.generateFreeSlots(req.professionalId(), date, date, null);
+            if (freeSlots.stream().noneMatch(dt -> dt.equals(start)))
+                continue;
 
             var profConflicts = appointmentRepo.findConflictingByProfessional(
                     req.professionalId(), start, end);
@@ -78,14 +80,25 @@ public class RecurrenceService {
                     .build();
             appointment = appointmentRepo.save(appointment);
 
-            var slots = slotRepo.findByProfessionalIdAndStartTimeBetweenOrderByStartTime(
+            var existingSlots = slotRepo.findByProfessionalIdAndStartTimeBetweenOrderByStartTime(
                     req.professionalId(), start, end);
-            for (var s : slots) {
-                s.setStatus(Slot.SlotStatus.BOOKED);
-                s.setPatientId(req.patientId());
-                s.setRoomId(req.roomId());
+            if (existingSlots.isEmpty()) {
+                slotRepo.save(Slot.builder()
+                        .professionalId(req.professionalId())
+                        .startTime(start)
+                        .endTime(end)
+                        .status(Slot.SlotStatus.BOOKED)
+                        .patientId(req.patientId())
+                        .roomId(req.roomId())
+                        .build());
+            } else {
+                for (var s : existingSlots) {
+                    s.setStatus(Slot.SlotStatus.BOOKED);
+                    s.setPatientId(req.patientId());
+                    s.setRoomId(req.roomId());
+                }
+                slotRepo.saveAll(existingSlots);
             }
-            slotRepo.saveAll(slots);
 
             eventProducer.publish(new AppointmentEvent("scheduled", appointment.getId(),
                     appointment.getClinicId(), appointment.getPatientId(),
@@ -130,9 +143,10 @@ public class RecurrenceService {
             if (occStart.equals(start)) continue;
             var occEnd = occStart.plusMinutes(duration);
 
-            var slotFree = slotRepo.existsByProfessionalIdAndStartTimeAndStatus(
-                    source.getProfessionalId(), occStart, Slot.SlotStatus.FREE);
-            if (!slotFree) continue;
+            var date = occStart.toLocalDate();
+            var freeSlots = slotEngine.generateFreeSlots(source.getProfessionalId(), date, date, null);
+            if (freeSlots.stream().noneMatch(dt -> dt.equals(occStart)))
+                continue;
 
             var profConflicts = appointmentRepo.findConflictingByProfessional(
                     source.getProfessionalId(), occStart, occEnd);
@@ -156,14 +170,25 @@ public class RecurrenceService {
                     .build();
             appointment = appointmentRepo.save(appointment);
 
-            var slots = slotRepo.findByProfessionalIdAndStartTimeBetweenOrderByStartTime(
+            var existingSlots = slotRepo.findByProfessionalIdAndStartTimeBetweenOrderByStartTime(
                     source.getProfessionalId(), occStart, occEnd);
-            for (var s : slots) {
-                s.setStatus(Slot.SlotStatus.BOOKED);
-                s.setPatientId(source.getPatientId());
-                s.setRoomId(source.getRoomId());
+            if (existingSlots.isEmpty()) {
+                slotRepo.save(Slot.builder()
+                        .professionalId(source.getProfessionalId())
+                        .startTime(occStart)
+                        .endTime(occEnd)
+                        .status(Slot.SlotStatus.BOOKED)
+                        .patientId(source.getPatientId())
+                        .roomId(source.getRoomId())
+                        .build());
+            } else {
+                for (var s : existingSlots) {
+                    s.setStatus(Slot.SlotStatus.BOOKED);
+                    s.setPatientId(source.getPatientId());
+                    s.setRoomId(source.getRoomId());
+                }
+                slotRepo.saveAll(existingSlots);
             }
-            slotRepo.saveAll(slots);
 
             eventProducer.publish(new AppointmentEvent("scheduled", appointment.getId(),
                     appointment.getClinicId(), appointment.getPatientId(),
@@ -192,11 +217,19 @@ public class RecurrenceService {
 
     private List<LocalDateTime> generateOccurrences(LocalDateTime startTime, long durationMinutes, String freq, Integer interval, Integer count, LocalDate until) {
         var results = new ArrayList<LocalDateTime>();
-        var f = freq != null ? freq : "WEEKLY";
+        var f = freq != null ? freq.toUpperCase() : "WEEKLY";
         var inv = interval != null ? interval : 1;
         var cnt = count != null ? count : Integer.MAX_VALUE;
-        var effectiveUntil = until != null ? until.atStartOfDay() : startTime.plusWeeks(MAX_WEEKS);
-        var maxTime = startTime.plusWeeks(MAX_WEEKS);
+
+        LocalDateTime maxTime;
+        LocalDateTime effectiveUntil;
+        if (until != null) {
+            effectiveUntil = until.atStartOfDay();
+            maxTime = startTime.plusWeeks(MAX_WEEKS);
+        } else {
+            effectiveUntil = startTime.plusWeeks(MAX_WEEKS);
+            maxTime = effectiveUntil;
+        }
         if (effectiveUntil.isAfter(maxTime)) effectiveUntil = maxTime;
 
         var current = startTime;
@@ -205,7 +238,13 @@ public class RecurrenceService {
         while (generated < cnt && !current.isAfter(effectiveUntil)) {
             results.add(current);
             generated++;
-            current = current.plusWeeks(inv);
+            current = switch (f) {
+                case "DAILY" -> current.plusDays(inv);
+                case "WEEKLY" -> current.plusWeeks(inv);
+                case "MONTHLY" -> current.plusMonths(inv);
+                case "YEARLY" -> current.plusYears(inv);
+                default -> current.plusWeeks(inv);
+            };
         }
 
         return results;

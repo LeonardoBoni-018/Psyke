@@ -34,6 +34,17 @@ spring:
             non_contextual_creation: true
     defer-datasource-initialization: true                  # ← LINHA 2: garante que o Flyway roda antes do JPA validar
 
+logging:
+  level:
+    com.br.psyke.psyke: DEBUG
+    org.springframework.web: INFO
+  file:
+    name: logs/psyke.log
+  logback:
+    rollingpolicy:
+      max-history: 7
+      max-file-size: 10MB
+
 app:
   jwt:
     secret: ${PSYKE_JWT_SECRET:CHANGE_ME_CHANGE_ME_CHANGE_ME_CHANGE_ME_CHANGE_ME_CHANGE_ME_CHANGE_ME}

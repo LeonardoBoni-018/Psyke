@@ -35,7 +35,6 @@ class AppointmentFlowIntegrationTest {
     @Autowired private TestRestTemplate rest;
     @Autowired private UserRepository userRepo;
     @Autowired private RoleRepository roleRepo;
-    @Autowired private SlotRepository slotRepo;
     @MockitoBean(name = "appointmentKafkaTemplate") private KafkaTemplate<String, AppointmentEvent> appointmentKafkaTemplate;
     @MockitoBean(name = "sessionKafkaTemplate") private KafkaTemplate<String, SessionEvent> sessionKafkaTemplate;
 
@@ -44,6 +43,24 @@ class AppointmentFlowIntegrationTest {
     private UUID patientId;
     private UUID tenantId;
     private String tenantIdStr;
+
+    private HttpHeaders authHeader() {
+        var h = new HttpHeaders();
+        h.setBearerAuth(adminToken);
+        return h;
+    }
+
+    private void createAvailability(UUID professionalId, LocalDate date, LocalTime start, LocalTime end, int duration) {
+        var dayOfWeek = date.getDayOfWeek().getValue() % 7;
+        var availRes = rest.exchange(
+            RequestEntity.post("/professionals/{pid}/availability", professionalId)
+                .headers(authHeader())
+                .body(new AvailabilityRequest(dayOfWeek, start, end, duration)),
+            AvailabilityResponse.class);
+        if (availRes.getStatusCode() != HttpStatus.CREATED) {
+            throw new RuntimeException("Failed to create availability: " + availRes.getStatusCode());
+        }
+    }
 
     @DynamicPropertySource
     static void props(DynamicPropertyRegistry r) {
@@ -86,26 +103,23 @@ class AppointmentFlowIntegrationTest {
         TenantContext.clear();
     }
 
+    private LocalDate nextMonday() {
+        var d = LocalDate.now().with(java.time.DayOfWeek.MONDAY);
+        if (d.isBefore(LocalDate.now()) || d.equals(LocalDate.now()))
+            d = d.plusWeeks(1);
+        return d;
+    }
+
     @Test
     void shouldDebugCreateAppointment() {
-        var nextMonday = LocalDate.now().with(java.time.DayOfWeek.MONDAY);
-        if (nextMonday.isBefore(LocalDate.now()) || nextMonday.equals(LocalDate.now()))
-            nextMonday = nextMonday.plusWeeks(1);
-        var slotStart = LocalDateTime.of(nextMonday, LocalTime.of(9, 0));
+        var date = nextMonday();
+        createAvailability(adminId, date, LocalTime.of(8, 0), LocalTime.of(12, 0), 50);
+        var slotStart = LocalDateTime.of(date, LocalTime.of(8, 0));
         var slotEnd = slotStart.plusMinutes(50);
-
-        TenantContext.setTenantId(tenantIdStr);
-        try {
-            slotRepo.save(Slot.builder()
-                .professionalId(adminId).startTime(slotStart).endTime(slotEnd)
-                .status(Slot.SlotStatus.FREE).build());
-        } finally {
-            TenantContext.clear();
-        }
 
         var res = rest.exchange(
             RequestEntity.post("/appointments")
-                .header("Authorization", "Bearer " + adminToken)
+                .headers(authHeader())
                 .body(new AppointmentRequest(patientId, adminId, null, slotStart, slotEnd, "Debug")),
             String.class);
         System.out.println("STATUS: " + res.getStatusCode());
@@ -115,24 +129,14 @@ class AppointmentFlowIntegrationTest {
 
     @Test
     void shouldCompleteFullAppointmentLifecycle() {
-        var nextMonday = LocalDate.now().with(java.time.DayOfWeek.MONDAY);
-        if (nextMonday.isBefore(LocalDate.now()) || nextMonday.equals(LocalDate.now()))
-            nextMonday = nextMonday.plusWeeks(1);
-
-        var slotStart = LocalDateTime.of(nextMonday, LocalTime.of(9, 0));
+        var date = nextMonday();
+        createAvailability(adminId, date, LocalTime.of(8, 0), LocalTime.of(12, 0), 50);
+        var slotStart = LocalDateTime.of(date, LocalTime.of(8, 0));
         var slotEnd = slotStart.plusMinutes(50);
-        TenantContext.setTenantId(tenantIdStr);
-        try {
-            slotRepo.save(Slot.builder()
-                .professionalId(adminId).startTime(slotStart).endTime(slotEnd)
-                .status(Slot.SlotStatus.FREE).build());
-        } finally {
-            TenantContext.clear();
-        }
 
         var aptRes = rest.exchange(
             RequestEntity.post("/appointments")
-                .header("Authorization", "Bearer " + adminToken)
+                .headers(authHeader())
                 .body(new AppointmentRequest(patientId, adminId, null, slotStart, slotEnd, "Integration test")),
             AppointmentResponse.class);
         assertThat(aptRes.getStatusCode()).isEqualTo(HttpStatus.CREATED);
@@ -141,14 +145,14 @@ class AppointmentFlowIntegrationTest {
 
         var confirmRes = rest.exchange(
             RequestEntity.patch("/appointments/{id}/status", aptId)
-                .header("Authorization", "Bearer " + adminToken)
+                .headers(authHeader())
                 .body(new StatusUpdateRequest(Appointment.AppointmentStatus.CONFIRMED, null)),
             AppointmentResponse.class);
         assertThat(confirmRes.getBody().status()).isEqualTo("CONFIRMED");
 
         var sessionRes = rest.exchange(
             RequestEntity.post("/appointments/{id}/session", aptId)
-                .header("Authorization", "Bearer " + adminToken)
+                .headers(authHeader())
                 .body(new CreateSessionRequest("Paciente apresentou melhora significativa")),
             AppointmentResponse.class);
         assertThat(sessionRes.getBody().status()).isEqualTo("DONE");
@@ -156,15 +160,15 @@ class AppointmentFlowIntegrationTest {
 
         var listRes = rest.exchange(
             RequestEntity.get("/appointments?professionalId={p}&from={f}&to={t}",
-                adminId, nextMonday.atStartOfDay(), nextMonday.plusDays(1).atStartOfDay())
-                .header("Authorization", "Bearer " + adminToken).build(),
+                adminId, date.atStartOfDay(), date.plusDays(1).atStartOfDay())
+                .headers(authHeader()).build(),
             new ParameterizedTypeReference<List<AppointmentResponse>>() {});
         assertThat(listRes.getBody()).hasSize(1);
 
         var calRes = rest.exchange(
             RequestEntity.get("/appointments/calendar?from={f}&to={t}",
-                nextMonday.atStartOfDay(), nextMonday.plusDays(1).atStartOfDay())
-                .header("Authorization", "Bearer " + adminToken).build(),
+                date.atStartOfDay(), date.plusDays(1).atStartOfDay())
+                .headers(authHeader()).build(),
             new ParameterizedTypeReference<List<CalendarEvent>>() {});
         assertThat(calRes.getBody()).hasSize(1);
         assertThat(calRes.getBody().get(0).extendedProps().get("status")).isEqualTo("DONE");
@@ -175,24 +179,14 @@ class AppointmentFlowIntegrationTest {
 
     @Test
     void shouldRejectInvalidStatusTransition() {
-        var nextMonday = LocalDate.now().with(java.time.DayOfWeek.MONDAY);
-        if (nextMonday.isBefore(LocalDate.now()) || nextMonday.equals(LocalDate.now()))
-            nextMonday = nextMonday.plusWeeks(1);
-        var slotStart = LocalDateTime.of(nextMonday, LocalTime.of(9, 0));
+        var date = nextMonday();
+        createAvailability(adminId, date, LocalTime.of(8, 0), LocalTime.of(12, 0), 50);
+        var slotStart = LocalDateTime.of(date, LocalTime.of(8, 0));
         var slotEnd = slotStart.plusMinutes(50);
-
-        TenantContext.setTenantId(tenantIdStr);
-        try {
-            slotRepo.save(Slot.builder()
-                .professionalId(adminId).startTime(slotStart).endTime(slotEnd)
-                .status(Slot.SlotStatus.FREE).build());
-        } finally {
-            TenantContext.clear();
-        }
 
         var aptRes = rest.exchange(
             RequestEntity.post("/appointments")
-                .header("Authorization", "Bearer " + adminToken)
+                .headers(authHeader())
                 .body(new AppointmentRequest(patientId, adminId, null, slotStart, slotEnd, "State test")),
             AppointmentResponse.class);
         assertThat(aptRes.getStatusCode()).isEqualTo(HttpStatus.CREATED);
@@ -200,7 +194,7 @@ class AppointmentFlowIntegrationTest {
 
         var badRes = rest.exchange(
             RequestEntity.patch("/appointments/{id}/status", aptId)
-                .header("Authorization", "Bearer " + adminToken)
+                .headers(authHeader())
                 .body(new StatusUpdateRequest(Appointment.AppointmentStatus.DONE, null)),
             ErrorResponse.class);
         assertThat(badRes.getStatusCode()).isEqualTo(HttpStatus.UNPROCESSABLE_CONTENT);
@@ -208,38 +202,28 @@ class AppointmentFlowIntegrationTest {
 
     @Test
     void shouldHandleCancellationAndWaitingList() {
-        var nextMonday = LocalDate.now().with(java.time.DayOfWeek.MONDAY);
-        if (nextMonday.isBefore(LocalDate.now()) || nextMonday.equals(LocalDate.now()))
-            nextMonday = nextMonday.plusWeeks(1);
-
-        var slotStart = LocalDateTime.of(nextMonday, LocalTime.of(9, 0));
+        var date = nextMonday();
+        createAvailability(adminId, date, LocalTime.of(8, 0), LocalTime.of(12, 0), 50);
+        var slotStart = LocalDateTime.of(date, LocalTime.of(8, 0));
         var slotEnd = slotStart.plusMinutes(50);
-        TenantContext.setTenantId(tenantIdStr);
-        try {
-            slotRepo.save(Slot.builder()
-                .professionalId(adminId).startTime(slotStart).endTime(slotEnd)
-                .status(Slot.SlotStatus.FREE).build());
-        } finally {
-            TenantContext.clear();
-        }
 
         var aptRes = rest.exchange(
             RequestEntity.post("/appointments")
-                .header("Authorization", "Bearer " + adminToken)
+                .headers(authHeader())
                 .body(new AppointmentRequest(patientId, adminId, null, slotStart, slotEnd, "Cancel test")),
             AppointmentResponse.class);
         var aptId = aptRes.getBody().id();
 
         var cancelRes = rest.exchange(
             RequestEntity.patch("/appointments/{id}/status", aptId)
-                .header("Authorization", "Bearer " + adminToken)
+                .headers(authHeader())
                 .body(new StatusUpdateRequest(Appointment.AppointmentStatus.CANCELLED, "Patient no longer needs")),
             AppointmentResponse.class);
         assertThat(cancelRes.getBody().status()).isEqualTo("CANCELLED");
 
         var wlRes = rest.exchange(
             RequestEntity.post("/waiting-list")
-                .header("Authorization", "Bearer " + adminToken)
+                .headers(authHeader())
                 .body(new WaitingListRequest(patientId, adminId, 1)),
             WaitingListResponse.class);
         assertThat(wlRes.getStatusCode()).isEqualTo(HttpStatus.CREATED);
@@ -247,7 +231,7 @@ class AppointmentFlowIntegrationTest {
 
         var listWl = rest.exchange(
             RequestEntity.get("/waiting-list?professionalId={p}", adminId)
-                .header("Authorization", "Bearer " + adminToken).build(),
+                .headers(authHeader()).build(),
             new ParameterizedTypeReference<List<WaitingListResponse>>() {});
         assertThat(listWl.getBody()).hasSize(1);
 

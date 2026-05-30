@@ -9,6 +9,7 @@ import com.br.psyke.psyke.model.*;
 import com.br.psyke.psyke.repository.*;
 import com.br.psyke.psyke.service.AppointmentService;
 import com.br.psyke.psyke.service.CancellationLogService;
+import com.br.psyke.psyke.service.SlotEngine;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -18,6 +19,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -37,6 +39,7 @@ class AppointmentConflictTest {
     @Mock private AppointmentEventProducer eventProducer;
     @Mock private SessionEventProducer sessionEventProducer;
     @Mock private CancellationLogService cancellationLogService;
+    @Mock private SlotEngine slotEngine;
     @Captor private ArgumentCaptor<Appointment> appointmentCaptor;
 
     private AppointmentService service;
@@ -49,7 +52,7 @@ class AppointmentConflictTest {
     @BeforeEach
     void setUp() {
         encoder = new BCryptPasswordEncoder();
-        service = new AppointmentService(appointmentRepo, slotRepo, userRepo, roomRepo, eventProducer, sessionEventProducer, cancellationLogService);
+        service = new AppointmentService(appointmentRepo, slotRepo, userRepo, roomRepo, eventProducer, sessionEventProducer, cancellationLogService, slotEngine);
 
         var clinicId = UUID.randomUUID();
         professional = User.builder().id(UUID.randomUUID()).clinicId(clinicId)
@@ -79,13 +82,15 @@ class AppointmentConflictTest {
         when(userRepo.findById(professional.getId())).thenReturn(Optional.of(professional));
         when(userRepo.findById(patient.getId())).thenReturn(Optional.of(patient));
         when(roomRepo.findById(room.getId())).thenReturn(Optional.of(room));
-        when(slotRepo.existsByProfessionalIdAndStartTimeAndStatus(professional.getId(), start, Slot.SlotStatus.FREE))
-                .thenReturn(true);
+        when(slotEngine.generateFreeSlots(professional.getId(), start.toLocalDate(), start.toLocalDate(), null))
+                .thenReturn(List.of(start));
         when(appointmentRepo.findConflictingByProfessional(professional.getId(), start, end))
                 .thenReturn(List.of());
         when(appointmentRepo.findConflictingByRoom(room.getId(), start, end))
                 .thenReturn(List.of());
         when(appointmentRepo.save(any())).thenReturn(saved);
+        when(slotRepo.findByProfessionalIdAndStartTimeBetweenOrderByStartTime(professional.getId(), start, end))
+                .thenReturn(List.of());
 
         var resp = service.create(req);
         assertThat(resp.status()).isEqualTo("SCHEDULED");
@@ -99,8 +104,8 @@ class AppointmentConflictTest {
 
         when(userRepo.findById(professional.getId())).thenReturn(Optional.of(professional));
         when(userRepo.findById(patient.getId())).thenReturn(Optional.of(patient));
-        when(slotRepo.existsByProfessionalIdAndStartTimeAndStatus(professional.getId(), start, Slot.SlotStatus.FREE))
-                .thenReturn(false);
+        when(slotEngine.generateFreeSlots(professional.getId(), start.toLocalDate(), start.toLocalDate(), null))
+                .thenReturn(List.of());
 
         var req = new AppointmentRequest(patient.getId(), professional.getId(), room.getId(), start, end, "Conflict");
         assertThatThrownBy(() -> service.create(req))
@@ -117,8 +122,8 @@ class AppointmentConflictTest {
 
         when(userRepo.findById(professional.getId())).thenReturn(Optional.of(professional));
         when(userRepo.findById(patient.getId())).thenReturn(Optional.of(patient));
-        when(slotRepo.existsByProfessionalIdAndStartTimeAndStatus(professional.getId(), start, Slot.SlotStatus.FREE))
-                .thenReturn(true);
+        when(slotEngine.generateFreeSlots(professional.getId(), start.toLocalDate(), start.toLocalDate(), null))
+                .thenReturn(List.of(start));
         when(appointmentRepo.findConflictingByProfessional(professional.getId(), start, end))
                 .thenReturn(List.of(existing));
 
@@ -137,8 +142,8 @@ class AppointmentConflictTest {
 
         when(userRepo.findById(professional.getId())).thenReturn(Optional.of(professional));
         when(userRepo.findById(patient.getId())).thenReturn(Optional.of(patient));
-        when(slotRepo.existsByProfessionalIdAndStartTimeAndStatus(professional.getId(), start, Slot.SlotStatus.FREE))
-                .thenReturn(true);
+        when(slotEngine.generateFreeSlots(professional.getId(), start.toLocalDate(), start.toLocalDate(), null))
+                .thenReturn(List.of(start));
         when(appointmentRepo.findConflictingByProfessional(professional.getId(), start, end))
                 .thenReturn(List.of());
         when(roomRepo.findById(room.getId())).thenReturn(Optional.of(room));
@@ -174,13 +179,15 @@ class AppointmentConflictTest {
         when(userRepo.findById(professional.getId())).thenReturn(Optional.of(professional));
         when(userRepo.findById(patient.getId())).thenReturn(Optional.of(patient));
         when(roomRepo.findById(room.getId())).thenReturn(Optional.of(room));
-        when(slotRepo.existsByProfessionalIdAndStartTimeAndStatus(professional.getId(), start, Slot.SlotStatus.FREE))
-                .thenReturn(true);
+        when(slotEngine.generateFreeSlots(professional.getId(), start.toLocalDate(), start.toLocalDate(), null))
+                .thenReturn(List.of(start));
         when(appointmentRepo.findConflictingByProfessional(professional.getId(), start, end))
                 .thenReturn(List.of());
         when(appointmentRepo.findConflictingByRoom(room.getId(), start, end))
                 .thenReturn(List.of());
         when(appointmentRepo.save(any())).thenReturn(saved);
+        when(slotRepo.findByProfessionalIdAndStartTimeBetweenOrderByStartTime(professional.getId(), start, end))
+                .thenReturn(List.of());
 
         service.create(req);
         verify(eventProducer).publish(argThat(e -> e.eventType().equals("scheduled")));
@@ -195,11 +202,13 @@ class AppointmentConflictTest {
 
         when(userRepo.findById(professional.getId())).thenReturn(Optional.of(professional));
         when(userRepo.findById(patient.getId())).thenReturn(Optional.of(patient));
-        when(slotRepo.existsByProfessionalIdAndStartTimeAndStatus(professional.getId(), start, Slot.SlotStatus.FREE))
-                .thenReturn(true);
+        when(slotEngine.generateFreeSlots(professional.getId(), start.toLocalDate(), start.toLocalDate(), null))
+                .thenReturn(List.of(start));
         when(appointmentRepo.findConflictingByProfessional(professional.getId(), start, end))
                 .thenReturn(List.of());
         when(appointmentRepo.save(any())).thenReturn(saved);
+        when(slotRepo.findByProfessionalIdAndStartTimeBetweenOrderByStartTime(professional.getId(), start, end))
+                .thenReturn(List.of());
 
         var resp = service.create(req);
         assertThat(resp.status()).isEqualTo("SCHEDULED");

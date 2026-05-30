@@ -12,6 +12,7 @@ import com.br.psyke.psyke.repository.SlotRepository;
 import com.br.psyke.psyke.repository.UserRepository;
 import com.br.psyke.psyke.service.AppointmentService;
 import com.br.psyke.psyke.service.CancellationLogService;
+import com.br.psyke.psyke.service.SlotEngine;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -35,6 +36,7 @@ class AppointmentDeletionTest {
     @Mock private AppointmentEventProducer eventProducer;
     @Mock private SessionEventProducer sessionEventProducer;
     @Mock private CancellationLogService cancellationLogService;
+    @Mock private SlotEngine slotEngine;
 
     private AppointmentService service;
     private UUID appointmentId;
@@ -44,7 +46,7 @@ class AppointmentDeletionTest {
     @BeforeEach
     void setUp() {
         service = new AppointmentService(appointmentRepo, slotRepo, userRepo, roomRepo,
-                eventProducer, sessionEventProducer, cancellationLogService);
+                eventProducer, sessionEventProducer, cancellationLogService, slotEngine);
         appointmentId = UUID.randomUUID();
         var now = LocalDateTime.now().plusDays(1);
         scheduledApp = Appointment.builder().id(appointmentId)

@@ -52,6 +52,7 @@ public class AppointmentService {
     private final AppointmentEventProducer eventProducer;
     private final SessionEventProducer sessionEventProducer;
     private final CancellationLogService cancellationLogService;
+    private final SlotEngine slotEngine;
 
     public List<AppointmentResponse> findAll(UUID professionalId, UUID patientId, Appointment.AppointmentStatus status, LocalDateTime from, LocalDateTime to) {
         return appointmentRepo.findAllByFilters(professionalId, patientId, status, from, to)
@@ -80,9 +81,10 @@ public class AppointmentService {
         userRepo.findById(req.patientId())
                 .orElseThrow(() -> new ResourceNotFoundException("Patient not found"));
 
-        var slotFree = slotRepo.existsByProfessionalIdAndStartTimeAndStatus(
-                req.professionalId(), req.startTime(), Slot.SlotStatus.FREE);
-        if (!slotFree) throw new SlotConflictException("Slot not available for this professional");
+        var date = req.startTime().toLocalDate();
+        var freeSlots = slotEngine.generateFreeSlots(req.professionalId(), date, date, null);
+        var slotAvailable = freeSlots.stream().anyMatch(dt -> dt.equals(req.startTime()));
+        if (!slotAvailable) throw new SlotConflictException("Slot not available for this professional");
 
         var profConflicts = appointmentRepo.findConflictingByProfessional(
                 req.professionalId(), req.startTime(), req.endTime());
@@ -110,14 +112,25 @@ public class AppointmentService {
                 .build();
         appointment = appointmentRepo.save(appointment);
 
-        var slots = slotRepo.findByProfessionalIdAndStartTimeBetweenOrderByStartTime(
+        var existingSlots = slotRepo.findByProfessionalIdAndStartTimeBetweenOrderByStartTime(
                 req.professionalId(), req.startTime(), req.endTime());
-        for (var s : slots) {
-            s.setStatus(Slot.SlotStatus.BOOKED);
-            s.setPatientId(req.patientId());
-            s.setRoomId(req.roomId());
+        if (existingSlots.isEmpty()) {
+            slotRepo.save(Slot.builder()
+                    .professionalId(req.professionalId())
+                    .startTime(req.startTime())
+                    .endTime(req.endTime())
+                    .status(Slot.SlotStatus.BOOKED)
+                    .patientId(req.patientId())
+                    .roomId(req.roomId())
+                    .build());
+        } else {
+            for (var s : existingSlots) {
+                s.setStatus(Slot.SlotStatus.BOOKED);
+                s.setPatientId(req.patientId());
+                s.setRoomId(req.roomId());
+            }
+            slotRepo.saveAll(existingSlots);
         }
-        slotRepo.saveAll(slots);
 
         eventProducer.publish(new AppointmentEvent("scheduled", appointment.getId(),
                 appointment.getClinicId(), appointment.getPatientId(),
