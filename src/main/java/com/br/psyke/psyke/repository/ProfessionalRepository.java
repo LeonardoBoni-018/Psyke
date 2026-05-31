@@ -12,4 +12,5 @@ public interface ProfessionalRepository extends JpaRepository<Professional, UUID
     Optional<Professional> findByIdAndClinicId(UUID id, UUID clinicId);
     boolean existsByClinicIdAndCrp(UUID clinicId, String crp);
     boolean existsByClinicIdAndCrpAndIdNot(UUID clinicId, String crp, UUID id);
+    long countByClinicIdAndActiveTrue(UUID clinicId);
 }

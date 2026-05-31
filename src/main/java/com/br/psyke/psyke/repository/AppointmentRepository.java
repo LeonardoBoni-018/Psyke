@@ -36,6 +36,12 @@ public interface AppointmentRepository extends JpaRepository<Appointment, UUID> 
     List<Appointment> findByPatientIdAndStartTimeAfterOrderByStartTime(
         UUID patientId, LocalDateTime from);
 
+    @Query("SELECT a.status, COUNT(a) FROM Appointment a WHERE a.clinicId = :clinicId AND a.startTime >= :from AND a.startTime < :to GROUP BY a.status")
+    List<Object[]> countByClinicIdAndStartTimeBetweenGroupByStatus(
+        @Param("clinicId") UUID clinicId,
+        @Param("from") LocalDateTime from,
+        @Param("to") LocalDateTime to);
+
     long countByProfessionalIdAndStartTimeBetweenAndStatusIn(
         UUID professionalId, LocalDateTime from, LocalDateTime to, List<Appointment.AppointmentStatus> statuses);
 
