@@ -3,6 +3,7 @@ package com.br.psyke.psyke.service;
 import com.br.psyke.psyke.dto.AppointmentRequest;
 import com.br.psyke.psyke.dto.AppointmentResponse;
 import com.br.psyke.psyke.dto.CalendarEvent;
+import com.br.psyke.psyke.dto.UpdateAppointmentRequest;
 import com.br.psyke.psyke.event.AppointmentEvent;
 import com.br.psyke.psyke.event.AppointmentEventProducer;
 import com.br.psyke.psyke.event.SessionEvent;
@@ -212,6 +213,22 @@ public class AppointmentService {
     public AppointmentResponse findById(UUID id) {
         return appointmentRepo.findById(id).map(this::toResponse)
                 .orElseThrow(() -> new ResourceNotFoundException("Appointment not found"));
+    }
+
+    @Transactional
+    public AppointmentResponse update(UUID id, UpdateAppointmentRequest req) {
+        var appointment = appointmentRepo.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Appointment not found"));
+
+        if (req.roomId() != null) {
+            roomRepo.findById(req.roomId())
+                    .orElseThrow(() -> new ResourceNotFoundException("Room not found"));
+            appointment.setRoomId(req.roomId());
+        }
+        if (req.notes() != null) appointment.setNotes(req.notes());
+
+        appointment = appointmentRepo.save(appointment);
+        return toResponse(appointment);
     }
 
     @Transactional

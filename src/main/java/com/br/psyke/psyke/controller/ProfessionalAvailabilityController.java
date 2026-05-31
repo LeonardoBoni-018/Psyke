@@ -2,6 +2,8 @@ package com.br.psyke.psyke.controller;
 
 import com.br.psyke.psyke.dto.*;
 import com.br.psyke.psyke.service.ProfessionalAvailabilityService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.format.annotation.DateTimeFormat;
@@ -16,11 +18,13 @@ import java.util.UUID;
 @RestController
 @RequestMapping("/professionals/{professionalId}")
 @RequiredArgsConstructor
+@Tag(name = "Schedule", description = "Professional schedule and availability management")
 public class ProfessionalAvailabilityController {
 
     private final ProfessionalAvailabilityService service;
 
     @GetMapping("/slots")
+    @Operation(summary = "Get free slots for a professional within a date range")
     public ResponseEntity<List<SlotResponse>> getSlots(
             @PathVariable UUID professionalId,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
@@ -30,11 +34,13 @@ public class ProfessionalAvailabilityController {
     }
 
     @GetMapping("/availability")
+    @Operation(summary = "List weekly availability for a professional")
     public ResponseEntity<List<AvailabilityResponse>> listAvailability(@PathVariable UUID professionalId) {
         return ResponseEntity.ok(service.listAvailability(professionalId));
     }
 
     @PostMapping("/availability")
+    @Operation(summary = "Create weekly availability for a professional")
     public ResponseEntity<AvailabilityResponse> createAvailability(
             @PathVariable UUID professionalId,
             @Valid @RequestBody AvailabilityRequest req) {
@@ -42,6 +48,7 @@ public class ProfessionalAvailabilityController {
     }
 
     @PutMapping("/availability/{id}")
+    @Operation(summary = "Update weekly availability entry")
     public ResponseEntity<AvailabilityResponse> updateAvailability(
             @PathVariable UUID professionalId,
             @PathVariable UUID id,
@@ -50,17 +57,20 @@ public class ProfessionalAvailabilityController {
     }
 
     @DeleteMapping("/availability/{id}")
+    @Operation(summary = "Delete weekly availability entry")
     public ResponseEntity<Void> deleteAvailability(@PathVariable UUID id) {
         service.deleteAvailability(id);
         return ResponseEntity.noContent().build();
     }
 
     @GetMapping("/exceptions")
+    @Operation(summary = "List availability exceptions for a professional")
     public ResponseEntity<List<ExceptionResponse>> listExceptions(@PathVariable UUID professionalId) {
         return ResponseEntity.ok(service.listExceptions(professionalId));
     }
 
     @PostMapping("/exceptions")
+    @Operation(summary = "Create an availability exception (vacation, holiday, block, extra hour)")
     public ResponseEntity<ExceptionResponse> createException(
             @PathVariable UUID professionalId,
             @Valid @RequestBody ExceptionRequest req) {
@@ -68,6 +78,7 @@ public class ProfessionalAvailabilityController {
     }
 
     @DeleteMapping("/exceptions/{id}")
+    @Operation(summary = "Deactivate an availability exception")
     public ResponseEntity<Void> deleteException(@PathVariable UUID id) {
         service.deleteException(id);
         return ResponseEntity.noContent().build();

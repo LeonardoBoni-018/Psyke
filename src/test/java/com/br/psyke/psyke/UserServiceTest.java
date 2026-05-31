@@ -2,6 +2,7 @@ package com.br.psyke.psyke;
 
 import com.br.psyke.psyke.dto.CreateUserRequest;
 import com.br.psyke.psyke.dto.UpdateRolesRequest;
+import com.br.psyke.psyke.dto.UpdateUserRequest;
 import com.br.psyke.psyke.exception.ResourceNotFoundException;
 import com.br.psyke.psyke.exception.UserAlreadyExistsException;
 import com.br.psyke.psyke.model.Role;
@@ -37,6 +38,7 @@ class UserServiceTest {
     private UUID tenantId;
     private Role rolePatient;
     private Role roleAdmin;
+    private User existingUser;
 
     @BeforeEach
     void setUp() {
@@ -45,6 +47,10 @@ class UserServiceTest {
         tenantId = UUID.randomUUID();
         rolePatient = Role.builder().id(UUID.randomUUID()).name("ROLE_PATIENT").build();
         roleAdmin = Role.builder().id(UUID.randomUUID()).name("ROLE_ADMIN").build();
+        existingUser = User.builder().id(UUID.randomUUID()).tenantId(tenantId)
+                .fullName("Carlos").email("carlos@test.com")
+                .cpf("12345678900").phone("+5511988887777")
+                .active(true).roles(Set.of(rolePatient)).build();
     }
 
     @Test
@@ -112,5 +118,76 @@ class UserServiceTest {
 
         var resp = service.findAll(tenantId, pageable);
         assertThat(resp).hasSize(2);
+    }
+
+    @Test
+    void shouldFindUserById() {
+        when(users.findByIdWithRoles(existingUser.getId()))
+                .thenReturn(Optional.of(existingUser));
+
+        var resp = service.findById(existingUser.getId());
+        assertThat(resp.fullName()).isEqualTo("Carlos");
+    }
+
+    @Test
+    void shouldThrowWhenUserNotFound() {
+        var id = UUID.randomUUID();
+        when(users.findByIdWithRoles(id)).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> service.findById(id))
+                .isInstanceOf(ResourceNotFoundException.class);
+    }
+
+    @Test
+    void shouldUpdateUser() {
+        var id = existingUser.getId();
+        var req = new UpdateUserRequest("Carlos Updated", null, null, null);
+
+        when(users.findByIdWithRoles(id)).thenReturn(Optional.of(existingUser));
+        when(users.save(any())).thenAnswer(i -> i.getArgument(0));
+
+        var resp = service.update(id, req);
+        assertThat(resp.fullName()).isEqualTo("Carlos Updated");
+    }
+
+    @Test
+    void shouldDeactivateUser() {
+        var id = existingUser.getId();
+        when(users.findByIdWithRoles(id)).thenReturn(Optional.of(existingUser));
+
+        service.delete(id);
+        assertThat(existingUser.isActive()).isFalse();
+        verify(users).save(existingUser);
+    }
+
+    @Test
+    void shouldThrowOnUpdateWhenUserNotFound() {
+        var id = UUID.randomUUID();
+        when(users.findByIdWithRoles(id)).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> service.update(id, new UpdateUserRequest(null, null, null, null)))
+                .isInstanceOf(ResourceNotFoundException.class);
+    }
+
+    @Test
+    void shouldThrowOnDeleteWhenUserNotFound() {
+        var id = UUID.randomUUID();
+        when(users.findByIdWithRoles(id)).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> service.delete(id))
+                .isInstanceOf(ResourceNotFoundException.class);
+    }
+
+    @Test
+    void shouldUpdateMultipleFields() {
+        var id = existingUser.getId();
+        var req = new UpdateUserRequest("Novo Nome", "99988877766", "+5511977776666", false);
+
+        when(users.findByIdWithRoles(id)).thenReturn(Optional.of(existingUser));
+        when(users.save(any())).thenAnswer(i -> i.getArgument(0));
+
+        var resp = service.update(id, req);
+        assertThat(resp.fullName()).isEqualTo("Novo Nome");
+        assertThat(resp.phone()).isEqualTo("+5511977776666");
     }
 }

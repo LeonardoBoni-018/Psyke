@@ -1,6 +1,7 @@
 package com.br.psyke.psyke.service;
 
 import com.br.psyke.psyke.dto.*;
+import com.br.psyke.psyke.exception.ResourceNotFoundException;
 import com.br.psyke.psyke.model.*;
 import com.br.psyke.psyke.repository.*;
 import lombok.RequiredArgsConstructor;
@@ -50,7 +51,8 @@ public class ProfessionalAvailabilityService {
 
     @Transactional
     public AvailabilityResponse updateAvailability(UUID id, AvailabilityRequest req) {
-        var entity = availabilityRepo.findById(id).orElseThrow();
+        var entity = availabilityRepo.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Availability not found"));
         entity.setDayOfWeek(req.dayOfWeek());
         entity.setStartTime(req.startTime());
         entity.setEndTime(req.endTime());
@@ -86,8 +88,10 @@ public class ProfessionalAvailabilityService {
 
     @Transactional
     public void deleteException(UUID id) {
-        var ex = exceptionRepo.findById(id).orElseThrow();
+        var ex = exceptionRepo.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Exception not found"));
         ex.setActive(false);
+        exceptionRepo.save(ex);
     }
 
     private AvailabilityResponse toAvailabilityResponse(ProfessionalAvailability a) {

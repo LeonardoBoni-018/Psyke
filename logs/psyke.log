@@ -6411,3 +6411,242 @@ This generated password is for development use only. Your security configuration
 2026-05-31T18:39:28.095-03:00  INFO 19236 --- [psyke] [SpringApplicationShutdownHook] j.LocalContainerEntityManagerFactoryBean : Closing JPA EntityManagerFactory for persistence unit 'default'
 2026-05-31T18:39:28.096-03:00  INFO 19236 --- [psyke] [SpringApplicationShutdownHook] com.zaxxer.hikari.HikariDataSource       : master - Shutdown initiated...
 2026-05-31T18:39:28.097-03:00  INFO 19236 --- [psyke] [SpringApplicationShutdownHook] com.zaxxer.hikari.HikariDataSource       : master - Shutdown completed.
+2026-05-31T18:47:10.997-03:00  INFO 14504 --- [psyke] [main] c.b.p.p.AppointmentFlowIntegrationTest   : Starting AppointmentFlowIntegrationTest using Java 17.0.12 with PID 14504 (started by bonil in J:\Projetos\psyke)
+2026-05-31T18:47:10.998-03:00 DEBUG 14504 --- [psyke] [main] c.b.p.p.AppointmentFlowIntegrationTest   : Running with Spring Boot v4.0.6, Spring v7.0.7
+2026-05-31T18:47:10.999-03:00  INFO 14504 --- [psyke] [main] c.b.p.p.AppointmentFlowIntegrationTest   : No active profile set, falling back to 1 default profile: "default"
+2026-05-31T18:47:12.993-03:00  INFO 14504 --- [psyke] [main] .s.d.r.c.RepositoryConfigurationDelegate : Bootstrapping Spring Data JPA repositories in DEFAULT mode.
+2026-05-31T18:47:13.139-03:00  INFO 14504 --- [psyke] [main] .s.d.r.c.RepositoryConfigurationDelegate : Finished Spring Data repository scanning in 131 ms. Found 20 JPA repository interfaces.
+2026-05-31T18:47:14.619-03:00  INFO 14504 --- [psyke] [main] o.s.boot.tomcat.TomcatWebServer          : Tomcat initialized with port 0 (http)
+2026-05-31T18:47:14.654-03:00  INFO 14504 --- [psyke] [main] o.apache.catalina.core.StandardService   : Starting service [Tomcat]
+2026-05-31T18:47:14.654-03:00  INFO 14504 --- [psyke] [main] o.apache.catalina.core.StandardEngine    : Starting Servlet engine: [Apache Tomcat/11.0.21]
+2026-05-31T18:47:14.868-03:00  INFO 14504 --- [psyke] [main] b.w.c.s.WebApplicationContextInitializer : Root WebApplicationContext: initialization completed in 3849 ms
+2026-05-31T18:47:15.143-03:00 DEBUG 14504 --- [psyke] [main] c.b.p.p.s.JwtAuthenticationFilter        : Filter 'jwtAuthenticationFilter' configured for use
+2026-05-31T18:47:15.348-03:00  INFO 14504 --- [psyke] [main] org.hibernate.orm.jpa                    : HHH008540: Processing PersistenceUnitInfo [name: default]
+2026-05-31T18:47:15.448-03:00  INFO 14504 --- [psyke] [main] org.hibernate.orm.core                   : HHH000001: Hibernate ORM core version 7.2.12.Final
+2026-05-31T18:47:15.966-03:00  INFO 14504 --- [psyke] [main] o.s.o.j.p.SpringPersistenceUnitInfo      : No LoadTimeWeaver setup: ignoring JPA class transformer
+2026-05-31T18:47:16.025-03:00  INFO 14504 --- [psyke] [main] com.zaxxer.hikari.HikariDataSource       : master - Starting...
+2026-05-31T18:47:16.215-03:00  INFO 14504 --- [psyke] [main] com.zaxxer.hikari.pool.HikariPool        : master - Added connection org.postgresql.jdbc.PgConnection@aba3735
+2026-05-31T18:47:16.216-03:00  INFO 14504 --- [psyke] [main] com.zaxxer.hikari.HikariDataSource       : master - Start completed.
+2026-05-31T18:47:16.265-03:00  WARN 14504 --- [psyke] [main] org.hibernate.orm.deprecation            : HHH90000025: PostgreSQLDialect does not need to be specified explicitly using 'hibernate.dialect' (remove the property setting and it will be selected by default)
+2026-05-31T18:47:16.307-03:00  INFO 14504 --- [psyke] [main] org.hibernate.orm.connections.pooling    : HHH10001005: Database info:
+	Database JDBC URL [jdbc:postgresql://localhost:5432/psyke_master]
+	Database driver: PostgreSQL JDBC Driver
+	Database dialect: PostgreSQLDialect
+	Database version: 18.4
+	Default catalog/schema: psyke_master/public
+	Autocommit mode: undefined/unknown
+	Isolation level: READ_COMMITTED [default READ_COMMITTED]
+	JDBC fetch size: none
+	Pool: DataSourceConnectionProvider
+	Minimum pool size: undefined/unknown
+	Maximum pool size: undefined/unknown
+2026-05-31T18:47:17.721-03:00  INFO 14504 --- [psyke] [main] org.hibernate.orm.core                   : HHH000489: No JTA platform available (set 'hibernate.transaction.jta.platform' to enable JTA platform integration)
+2026-05-31T18:47:17.746-03:00  INFO 14504 --- [psyke] [main] j.LocalContainerEntityManagerFactoryBean : Initialized JPA EntityManagerFactory for persistence unit 'default'
+2026-05-31T18:47:18.046-03:00  INFO 14504 --- [psyke] [main] com.br.psyke.psyke.ai.AiService          : AiService initialized: enabled=false, model=gpt-4o-mini, url=https://api.openai.com/v1
+2026-05-31T18:47:18.169-03:00  INFO 14504 --- [psyke] [main] o.s.d.j.r.query.QueryEnhancerFactories   : Hibernate is in classpath; If applicable, HQL parser will be used.
+2026-05-31T18:47:20.579-03:00  WARN 14504 --- [psyke] [main] .s.a.UserDetailsServiceAutoConfiguration : 
+
+Using generated security password: ac6fd575-c2d6-45cb-98bf-36abf5b4d8fd
+
+This generated password is for development use only. Your security configuration must be updated before running your application in production.
+
+2026-05-31T18:47:20.596-03:00  INFO 14504 --- [psyke] [main] r$InitializeUserDetailsManagerConfigurer : Global AuthenticationManager configured with UserDetailsService bean with name inMemoryUserDetailsManager
+2026-05-31T18:47:21.987-03:00  INFO 14504 --- [psyke] [main] o.s.b.a.e.web.EndpointLinksResolver      : Exposing 1 endpoint beneath base path '/actuator'
+2026-05-31T18:47:22.086-03:00  INFO 14504 --- [psyke] [main] o.s.boot.tomcat.TomcatWebServer          : Tomcat started on port 55524 (http) with context path '/'
+2026-05-31T18:47:22.113-03:00  INFO 14504 --- [psyke] [main] c.b.p.p.AppointmentFlowIntegrationTest   : Started AppointmentFlowIntegrationTest in 11.609 seconds (process running for 17.196)
+2026-05-31T18:47:22.403-03:00  INFO 14504 --- [psyke] [main] org.flywaydb.core.FlywayExecutor         : Database: jdbc:postgresql://localhost:5432/psyke_master (PostgreSQL 18.4)
+2026-05-31T18:47:22.474-03:00  INFO 14504 --- [psyke] [main] o.f.core.internal.command.DbValidate     : Successfully validated 2 migrations (execution time 00:00.041s)
+2026-05-31T18:47:22.494-03:00  INFO 14504 --- [psyke] [main] o.f.core.internal.command.DbMigrate      : Current version of schema "public": 2
+2026-05-31T18:47:22.496-03:00  INFO 14504 --- [psyke] [main] o.f.core.internal.command.DbMigrate      : Schema "public" is up to date. No migration necessary.
+2026-05-31T18:47:22.501-03:00  INFO 14504 --- [psyke] [main] com.br.psyke.psyke.config.FlywayConfig   : Master Flyway migrations: 0 applied, 0 skipped
+2026-05-31T18:47:22.502-03:00  WARN 14504 --- [psyke] [main] o.s.core.events.SpringDocAppInitializer  : SpringDoc /v3/api-docs endpoint is enabled by default. To disable it in production, set the property 'springdoc.api-docs.enabled=false'
+2026-05-31T18:47:22.502-03:00  WARN 14504 --- [psyke] [main] o.s.core.events.SpringDocAppInitializer  : SpringDoc /swagger-ui.html endpoint is enabled by default. To disable it in production, set the property 'springdoc.swagger-ui.enabled=false'
+2026-05-31T18:47:22.682-03:00  INFO 14504 --- [psyke] [http-nio-auto-1-exec-1] o.a.c.c.C.[Tomcat].[localhost].[/]       : Initializing Spring DispatcherServlet 'dispatcherServlet'
+2026-05-31T18:47:22.682-03:00  INFO 14504 --- [psyke] [http-nio-auto-1-exec-1] o.s.web.servlet.DispatcherServlet        : Initializing Servlet 'dispatcherServlet'
+2026-05-31T18:47:22.686-03:00  INFO 14504 --- [psyke] [http-nio-auto-1-exec-1] o.s.web.servlet.DispatcherServlet        : Completed initialization in 4 ms
+2026-05-31T18:47:23.127-03:00  INFO 14504 --- [psyke] [http-nio-auto-1-exec-1] org.flywaydb.core.FlywayExecutor         : Database: jdbc:postgresql://localhost:5432/psyke_master (PostgreSQL 18.4)
+2026-05-31T18:47:23.147-03:00  INFO 14504 --- [psyke] [http-nio-auto-1-exec-1] o.f.core.internal.database.base.Schema   : Creating schema "tenant_itefa437" ...
+2026-05-31T18:47:23.155-03:00  INFO 14504 --- [psyke] [http-nio-auto-1-exec-1] o.f.c.i.s.JdbcTableSchemaHistory         : Creating Schema History table "tenant_itefa437"."flyway_schema_history" ...
+2026-05-31T18:47:23.292-03:00  INFO 14504 --- [psyke] [http-nio-auto-1-exec-1] o.f.core.internal.command.DbMigrate      : Current version of schema "tenant_itefa437": null
+2026-05-31T18:47:23.306-03:00  INFO 14504 --- [psyke] [http-nio-auto-1-exec-1] o.f.core.internal.command.DbMigrate      : Migrating schema "tenant_itefa437" to version "1 - create tenant schema"
+2026-05-31T18:47:23.313-03:00  WARN 14504 --- [psyke] [http-nio-auto-1-exec-1] o.f.c.i.s.DefaultSqlScriptExecutor       : DB: extensão "pgcrypto" já existe, ignorando (SQL State: 42710 - Error Code: 0)
+2026-05-31T18:47:23.365-03:00  INFO 14504 --- [psyke] [http-nio-auto-1-exec-1] o.f.core.internal.command.DbMigrate      : Migrating schema "tenant_itefa437" to version "2 - create availability tables"
+2026-05-31T18:47:23.408-03:00  INFO 14504 --- [psyke] [http-nio-auto-1-exec-1] o.f.core.internal.command.DbMigrate      : Migrating schema "tenant_itefa437" to version "3 - create appointment tables"
+2026-05-31T18:47:23.452-03:00  INFO 14504 --- [psyke] [http-nio-auto-1-exec-1] o.f.core.internal.command.DbMigrate      : Migrating schema "tenant_itefa437" to version "4 - create waiting list and cancellation logs"
+2026-05-31T18:47:23.480-03:00  INFO 14504 --- [psyke] [http-nio-auto-1-exec-1] o.f.core.internal.command.DbMigrate      : Migrating schema "tenant_itefa437" to version "5 - create prontuario tables"
+2026-05-31T18:47:23.524-03:00  INFO 14504 --- [psyke] [http-nio-auto-1-exec-1] o.f.core.internal.command.DbMigrate      : Migrating schema "tenant_itefa437" to version "6 - add missing indexes and fields"
+2026-05-31T18:47:23.531-03:00  WARN 14504 --- [psyke] [http-nio-auto-1-exec-1] o.f.c.i.s.DefaultSqlScriptExecutor       : DB: relação "idx_appointments_professional_time" já existe, ignorando (SQL State: 42P07 - Error Code: 0)
+2026-05-31T18:47:23.542-03:00  INFO 14504 --- [psyke] [http-nio-auto-1-exec-1] o.f.core.internal.command.DbMigrate      : Successfully applied 6 migrations to schema "tenant_itefa437", now at version v6 (execution time 00:00.164s)
+2026-05-31T18:47:23.545-03:00  INFO 14504 --- [psyke] [http-nio-auto-1-exec-1] c.b.p.p.security.TenantAwareDataSource   : DataSource for tenant 45948e97-b6e5-41c3-a644-7499c118219f (schema tenant_itefa437)
+2026-05-31T18:47:24.036-03:00  INFO 14504 --- [psyke] [http-nio-auto-1-exec-3] com.zaxxer.hikari.HikariDataSource       : pool-45948e97-b6e5-41c3-a644-7499c118219f - Starting...
+2026-05-31T18:47:24.197-03:00  INFO 14504 --- [psyke] [http-nio-auto-1-exec-3] com.zaxxer.hikari.pool.HikariPool        : pool-45948e97-b6e5-41c3-a644-7499c118219f - Added connection org.postgresql.jdbc.PgConnection@15b82f75
+2026-05-31T18:47:24.198-03:00  INFO 14504 --- [psyke] [http-nio-auto-1-exec-3] com.zaxxer.hikari.HikariDataSource       : pool-45948e97-b6e5-41c3-a644-7499c118219f - Start completed.
+2026-05-31T18:47:24.292-03:00  INFO 14504 --- [psyke] [http-nio-auto-1-exec-4] c.b.p.p.event.AppointmentEventProducer   : Sent appointment.scheduled -> 16b72386-a876-49b5-a774-9b6d09aa6770
+2026-05-31T18:47:24.323-03:00  INFO 14504 --- [psyke] [http-nio-auto-1-exec-5] c.b.p.p.event.AppointmentEventProducer   : Sent appointment.confirmed -> 16b72386-a876-49b5-a774-9b6d09aa6770
+2026-05-31T18:47:24.342-03:00  INFO 14504 --- [psyke] [http-nio-auto-1-exec-9] c.b.p.psyke.event.SessionEventProducer   : Sent appointment.session.created -> 16b72386-a876-49b5-a774-9b6d09aa6770
+2026-05-31T18:47:24.522-03:00  INFO 14504 --- [psyke] [http-nio-auto-1-exec-7] org.flywaydb.core.FlywayExecutor         : Database: jdbc:postgresql://localhost:5432/psyke_master (PostgreSQL 18.4)
+2026-05-31T18:47:24.539-03:00  INFO 14504 --- [psyke] [http-nio-auto-1-exec-7] o.f.core.internal.database.base.Schema   : Creating schema "tenant_it5d1b1b" ...
+2026-05-31T18:47:24.542-03:00  INFO 14504 --- [psyke] [http-nio-auto-1-exec-7] o.f.c.i.s.JdbcTableSchemaHistory         : Creating Schema History table "tenant_it5d1b1b"."flyway_schema_history" ...
+2026-05-31T18:47:24.563-03:00  INFO 14504 --- [psyke] [http-nio-auto-1-exec-7] o.f.core.internal.command.DbMigrate      : Current version of schema "tenant_it5d1b1b": null
+2026-05-31T18:47:24.567-03:00  INFO 14504 --- [psyke] [http-nio-auto-1-exec-7] o.f.core.internal.command.DbMigrate      : Migrating schema "tenant_it5d1b1b" to version "1 - create tenant schema"
+2026-05-31T18:47:24.569-03:00  WARN 14504 --- [psyke] [http-nio-auto-1-exec-7] o.f.c.i.s.DefaultSqlScriptExecutor       : DB: extensão "pgcrypto" já existe, ignorando (SQL State: 42710 - Error Code: 0)
+2026-05-31T18:47:24.594-03:00  INFO 14504 --- [psyke] [http-nio-auto-1-exec-7] o.f.core.internal.command.DbMigrate      : Migrating schema "tenant_it5d1b1b" to version "2 - create availability tables"
+2026-05-31T18:47:24.629-03:00  INFO 14504 --- [psyke] [http-nio-auto-1-exec-7] o.f.core.internal.command.DbMigrate      : Migrating schema "tenant_it5d1b1b" to version "3 - create appointment tables"
+2026-05-31T18:47:24.662-03:00  INFO 14504 --- [psyke] [http-nio-auto-1-exec-7] o.f.core.internal.command.DbMigrate      : Migrating schema "tenant_it5d1b1b" to version "4 - create waiting list and cancellation logs"
+2026-05-31T18:47:24.689-03:00  INFO 14504 --- [psyke] [http-nio-auto-1-exec-7] o.f.core.internal.command.DbMigrate      : Migrating schema "tenant_it5d1b1b" to version "5 - create prontuario tables"
+2026-05-31T18:47:24.725-03:00  INFO 14504 --- [psyke] [http-nio-auto-1-exec-7] o.f.core.internal.command.DbMigrate      : Migrating schema "tenant_it5d1b1b" to version "6 - add missing indexes and fields"
+2026-05-31T18:47:24.734-03:00  WARN 14504 --- [psyke] [http-nio-auto-1-exec-7] o.f.c.i.s.DefaultSqlScriptExecutor       : DB: relação "idx_appointments_professional_time" já existe, ignorando (SQL State: 42P07 - Error Code: 0)
+2026-05-31T18:47:24.739-03:00  INFO 14504 --- [psyke] [http-nio-auto-1-exec-7] o.f.core.internal.command.DbMigrate      : Successfully applied 6 migrations to schema "tenant_it5d1b1b", now at version v6 (execution time 00:00.126s)
+2026-05-31T18:47:24.741-03:00  INFO 14504 --- [psyke] [http-nio-auto-1-exec-7] c.b.p.p.security.TenantAwareDataSource   : DataSource for tenant b897ab13-bad8-404b-b37e-8d05e5c30704 (schema tenant_it5d1b1b)
+2026-05-31T18:47:24.913-03:00  INFO 14504 --- [psyke] [http-nio-auto-1-exec-1] com.zaxxer.hikari.HikariDataSource       : pool-b897ab13-bad8-404b-b37e-8d05e5c30704 - Starting...
+2026-05-31T18:47:24.967-03:00  INFO 14504 --- [psyke] [http-nio-auto-1-exec-1] com.zaxxer.hikari.pool.HikariPool        : pool-b897ab13-bad8-404b-b37e-8d05e5c30704 - Added connection org.postgresql.jdbc.PgConnection@15466592
+2026-05-31T18:47:24.967-03:00  INFO 14504 --- [psyke] [http-nio-auto-1-exec-1] com.zaxxer.hikari.HikariDataSource       : pool-b897ab13-bad8-404b-b37e-8d05e5c30704 - Start completed.
+2026-05-31T18:47:25.007-03:00  INFO 14504 --- [psyke] [http-nio-auto-1-exec-2] c.b.p.p.event.AppointmentEventProducer   : Sent appointment.scheduled -> d6d6da4f-cbcb-42c9-b238-88205878cad6
+2026-05-31T18:47:25.055-03:00  INFO 14504 --- [psyke] [http-nio-auto-1-exec-3] org.flywaydb.core.FlywayExecutor         : Database: jdbc:postgresql://localhost:5432/psyke_master (PostgreSQL 18.4)
+2026-05-31T18:47:25.066-03:00  INFO 14504 --- [psyke] [http-nio-auto-1-exec-3] o.f.core.internal.database.base.Schema   : Creating schema "tenant_it725542" ...
+2026-05-31T18:47:25.069-03:00  INFO 14504 --- [psyke] [http-nio-auto-1-exec-3] o.f.c.i.s.JdbcTableSchemaHistory         : Creating Schema History table "tenant_it725542"."flyway_schema_history" ...
+2026-05-31T18:47:25.109-03:00  INFO 14504 --- [psyke] [http-nio-auto-1-exec-3] o.f.core.internal.command.DbMigrate      : Current version of schema "tenant_it725542": null
+2026-05-31T18:47:25.113-03:00  INFO 14504 --- [psyke] [http-nio-auto-1-exec-3] o.f.core.internal.command.DbMigrate      : Migrating schema "tenant_it725542" to version "1 - create tenant schema"
+2026-05-31T18:47:25.113-03:00  WARN 14504 --- [psyke] [http-nio-auto-1-exec-3] o.f.c.i.s.DefaultSqlScriptExecutor       : DB: extensão "pgcrypto" já existe, ignorando (SQL State: 42710 - Error Code: 0)
+2026-05-31T18:47:25.137-03:00  INFO 14504 --- [psyke] [http-nio-auto-1-exec-3] o.f.core.internal.command.DbMigrate      : Migrating schema "tenant_it725542" to version "2 - create availability tables"
+2026-05-31T18:47:25.161-03:00  INFO 14504 --- [psyke] [http-nio-auto-1-exec-3] o.f.core.internal.command.DbMigrate      : Migrating schema "tenant_it725542" to version "3 - create appointment tables"
+2026-05-31T18:47:25.187-03:00  INFO 14504 --- [psyke] [http-nio-auto-1-exec-3] o.f.core.internal.command.DbMigrate      : Migrating schema "tenant_it725542" to version "4 - create waiting list and cancellation logs"
+2026-05-31T18:47:25.208-03:00  INFO 14504 --- [psyke] [http-nio-auto-1-exec-3] o.f.core.internal.command.DbMigrate      : Migrating schema "tenant_it725542" to version "5 - create prontuario tables"
+2026-05-31T18:47:25.232-03:00  INFO 14504 --- [psyke] [http-nio-auto-1-exec-3] o.f.core.internal.command.DbMigrate      : Migrating schema "tenant_it725542" to version "6 - add missing indexes and fields"
+2026-05-31T18:47:25.238-03:00  WARN 14504 --- [psyke] [http-nio-auto-1-exec-3] o.f.c.i.s.DefaultSqlScriptExecutor       : DB: relação "idx_appointments_professional_time" já existe, ignorando (SQL State: 42P07 - Error Code: 0)
+2026-05-31T18:47:25.241-03:00  INFO 14504 --- [psyke] [http-nio-auto-1-exec-3] o.f.core.internal.command.DbMigrate      : Successfully applied 6 migrations to schema "tenant_it725542", now at version v6 (execution time 00:00.093s)
+2026-05-31T18:47:25.243-03:00  INFO 14504 --- [psyke] [http-nio-auto-1-exec-3] c.b.p.p.security.TenantAwareDataSource   : DataSource for tenant a6f849d6-3989-41c0-9679-306a8c2b0226 (schema tenant_it725542)
+2026-05-31T18:47:25.407-03:00  INFO 14504 --- [psyke] [http-nio-auto-1-exec-5] com.zaxxer.hikari.HikariDataSource       : pool-a6f849d6-3989-41c0-9679-306a8c2b0226 - Starting...
+2026-05-31T18:47:25.565-03:00  INFO 14504 --- [psyke] [http-nio-auto-1-exec-5] com.zaxxer.hikari.pool.HikariPool        : pool-a6f849d6-3989-41c0-9679-306a8c2b0226 - Added connection org.postgresql.jdbc.PgConnection@63185620
+2026-05-31T18:47:25.565-03:00  INFO 14504 --- [psyke] [http-nio-auto-1-exec-5] com.zaxxer.hikari.HikariDataSource       : pool-a6f849d6-3989-41c0-9679-306a8c2b0226 - Start completed.
+2026-05-31T18:47:25.605-03:00  INFO 14504 --- [psyke] [http-nio-auto-1-exec-9] c.b.p.p.event.AppointmentEventProducer   : Sent appointment.scheduled -> 44d5e39f-55d7-40ad-877e-85eb96a4216e
+2026-05-31T18:47:25.670-03:00  INFO 14504 --- [psyke] [http-nio-auto-1-exec-8] org.flywaydb.core.FlywayExecutor         : Database: jdbc:postgresql://localhost:5432/psyke_master (PostgreSQL 18.4)
+2026-05-31T18:47:25.679-03:00  INFO 14504 --- [psyke] [http-nio-auto-1-exec-8] o.f.core.internal.database.base.Schema   : Creating schema "tenant_it65e193" ...
+2026-05-31T18:47:25.681-03:00  INFO 14504 --- [psyke] [http-nio-auto-1-exec-8] o.f.c.i.s.JdbcTableSchemaHistory         : Creating Schema History table "tenant_it65e193"."flyway_schema_history" ...
+2026-05-31T18:47:25.703-03:00  INFO 14504 --- [psyke] [http-nio-auto-1-exec-8] o.f.core.internal.command.DbMigrate      : Current version of schema "tenant_it65e193": null
+2026-05-31T18:47:25.705-03:00  INFO 14504 --- [psyke] [http-nio-auto-1-exec-8] o.f.core.internal.command.DbMigrate      : Migrating schema "tenant_it65e193" to version "1 - create tenant schema"
+2026-05-31T18:47:25.706-03:00  WARN 14504 --- [psyke] [http-nio-auto-1-exec-8] o.f.c.i.s.DefaultSqlScriptExecutor       : DB: extensão "pgcrypto" já existe, ignorando (SQL State: 42710 - Error Code: 0)
+2026-05-31T18:47:25.736-03:00  INFO 14504 --- [psyke] [http-nio-auto-1-exec-8] o.f.core.internal.command.DbMigrate      : Migrating schema "tenant_it65e193" to version "2 - create availability tables"
+2026-05-31T18:47:25.763-03:00  INFO 14504 --- [psyke] [http-nio-auto-1-exec-8] o.f.core.internal.command.DbMigrate      : Migrating schema "tenant_it65e193" to version "3 - create appointment tables"
+2026-05-31T18:47:25.794-03:00  INFO 14504 --- [psyke] [http-nio-auto-1-exec-8] o.f.core.internal.command.DbMigrate      : Migrating schema "tenant_it65e193" to version "4 - create waiting list and cancellation logs"
+2026-05-31T18:47:25.812-03:00  INFO 14504 --- [psyke] [http-nio-auto-1-exec-8] o.f.core.internal.command.DbMigrate      : Migrating schema "tenant_it65e193" to version "5 - create prontuario tables"
+2026-05-31T18:47:25.838-03:00  INFO 14504 --- [psyke] [http-nio-auto-1-exec-8] o.f.core.internal.command.DbMigrate      : Migrating schema "tenant_it65e193" to version "6 - add missing indexes and fields"
+2026-05-31T18:47:25.844-03:00  WARN 14504 --- [psyke] [http-nio-auto-1-exec-8] o.f.c.i.s.DefaultSqlScriptExecutor       : DB: relação "idx_appointments_professional_time" já existe, ignorando (SQL State: 42P07 - Error Code: 0)
+2026-05-31T18:47:25.847-03:00  INFO 14504 --- [psyke] [http-nio-auto-1-exec-8] o.f.core.internal.command.DbMigrate      : Successfully applied 6 migrations to schema "tenant_it65e193", now at version v6 (execution time 00:00.105s)
+2026-05-31T18:47:25.848-03:00  INFO 14504 --- [psyke] [http-nio-auto-1-exec-8] c.b.p.p.security.TenantAwareDataSource   : DataSource for tenant d21d3316-a67f-4e54-a8c6-95d33012dc6c (schema tenant_it65e193)
+2026-05-31T18:47:26.012-03:00  INFO 14504 --- [psyke] [http-nio-auto-1-exec-10] com.zaxxer.hikari.HikariDataSource       : pool-d21d3316-a67f-4e54-a8c6-95d33012dc6c - Starting...
+2026-05-31T18:47:26.067-03:00  INFO 14504 --- [psyke] [http-nio-auto-1-exec-10] com.zaxxer.hikari.pool.HikariPool        : pool-d21d3316-a67f-4e54-a8c6-95d33012dc6c - Added connection org.postgresql.jdbc.PgConnection@30723b80
+2026-05-31T18:47:26.068-03:00  INFO 14504 --- [psyke] [http-nio-auto-1-exec-10] com.zaxxer.hikari.HikariDataSource       : pool-d21d3316-a67f-4e54-a8c6-95d33012dc6c - Start completed.
+2026-05-31T18:47:26.108-03:00  INFO 14504 --- [psyke] [http-nio-auto-1-exec-1] c.b.p.p.event.AppointmentEventProducer   : Sent appointment.scheduled -> d13902f7-ac44-489f-aa4a-8f8ea1e4b5b5
+2026-05-31T18:47:26.135-03:00  INFO 14504 --- [psyke] [http-nio-auto-1-exec-2] c.b.p.p.event.AppointmentEventProducer   : Sent appointment.cancelled -> d13902f7-ac44-489f-aa4a-8f8ea1e4b5b5
+2026-05-31T18:47:26.202-03:00  WARN 14504 --- [psyke] [http-nio-auto-1-exec-4] ration$PageModule$WarningLoggingModifier : Serializing PageImpl instances as-is is not supported, meaning that there is no guarantee about the stability of the resulting JSON structure!
+	For a stable JSON structure, please use Spring Data's PagedModel (globally via @EnableSpringDataWebSupport(pageSerializationMode = VIA_DTO))
+	or Spring HATEOAS and Spring Data's PagedResourcesAssembler as documented in https://docs.spring.io/spring-data/commons/reference/repositories/core-extensions.html#core.web.pageables.
+
+2026-05-31T18:47:27.968-03:00  INFO 14504 --- [psyke] [main] t.c.s.AnnotationConfigContextLoaderUtils : Could not detect default configuration classes for test class [com.br.psyke.psyke.PsykeApplicationTests]: PsykeApplicationTests does not declare any static, non-private, non-final, nested classes annotated with @Configuration.
+2026-05-31T18:47:27.977-03:00  INFO 14504 --- [psyke] [main] .b.t.c.SpringBootTestContextBootstrapper : Found @SpringBootConfiguration com.br.psyke.psyke.PsykeApplication for test class com.br.psyke.psyke.PsykeApplicationTests
+2026-05-31T18:47:27.980-03:00  INFO 14504 --- [psyke] [main] t.c.s.AnnotationConfigContextLoaderUtils : Could not detect default configuration classes for test class [com.br.psyke.psyke.PsykeApplicationTests]: PsykeApplicationTests does not declare any static, non-private, non-final, nested classes annotated with @Configuration.
+2026-05-31T18:47:27.983-03:00  INFO 14504 --- [psyke] [main] .b.t.c.SpringBootTestContextBootstrapper : Found @SpringBootConfiguration com.br.psyke.psyke.PsykeApplication for test class com.br.psyke.psyke.PsykeApplicationTests
+2026-05-31T18:47:28.031-03:00  INFO 14504 --- [psyke] [main] c.br.psyke.psyke.PsykeApplicationTests   : Starting PsykeApplicationTests using Java 17.0.12 with PID 14504 (started by bonil in J:\Projetos\psyke)
+2026-05-31T18:47:28.031-03:00 DEBUG 14504 --- [psyke] [main] c.br.psyke.psyke.PsykeApplicationTests   : Running with Spring Boot v4.0.6, Spring v7.0.7
+2026-05-31T18:47:28.032-03:00  INFO 14504 --- [psyke] [main] c.br.psyke.psyke.PsykeApplicationTests   : No active profile set, falling back to 1 default profile: "default"
+2026-05-31T18:47:28.523-03:00  INFO 14504 --- [psyke] [main] .s.d.r.c.RepositoryConfigurationDelegate : Bootstrapping Spring Data JPA repositories in DEFAULT mode.
+2026-05-31T18:47:28.574-03:00  INFO 14504 --- [psyke] [main] .s.d.r.c.RepositoryConfigurationDelegate : Finished Spring Data repository scanning in 48 ms. Found 20 JPA repository interfaces.
+2026-05-31T18:47:28.811-03:00  INFO 14504 --- [psyke] [main] o.s.boot.tomcat.TomcatWebServer          : Tomcat initialized with port 0 (http)
+2026-05-31T18:47:28.812-03:00  INFO 14504 --- [psyke] [main] o.apache.catalina.core.StandardService   : Starting service [Tomcat]
+2026-05-31T18:47:28.813-03:00  INFO 14504 --- [psyke] [main] o.apache.catalina.core.StandardEngine    : Starting Servlet engine: [Apache Tomcat/11.0.21]
+2026-05-31T18:47:28.886-03:00  INFO 14504 --- [psyke] [main] b.w.c.s.WebApplicationContextInitializer : Root WebApplicationContext: initialization completed in 850 ms
+2026-05-31T18:47:28.963-03:00 DEBUG 14504 --- [psyke] [main] c.b.p.p.s.JwtAuthenticationFilter        : Filter 'jwtAuthenticationFilter' configured for use
+2026-05-31T18:47:29.011-03:00  INFO 14504 --- [psyke] [main] org.hibernate.orm.jpa                    : HHH008540: Processing PersistenceUnitInfo [name: default]
+2026-05-31T18:47:29.045-03:00  INFO 14504 --- [psyke] [main] o.s.o.j.p.SpringPersistenceUnitInfo      : No LoadTimeWeaver setup: ignoring JPA class transformer
+2026-05-31T18:47:29.047-03:00  INFO 14504 --- [psyke] [main] com.zaxxer.hikari.HikariDataSource       : master - Starting...
+2026-05-31T18:47:29.120-03:00  INFO 14504 --- [psyke] [main] com.zaxxer.hikari.pool.HikariPool        : master - Added connection org.postgresql.jdbc.PgConnection@1976e6ca
+2026-05-31T18:47:29.121-03:00  INFO 14504 --- [psyke] [main] com.zaxxer.hikari.HikariDataSource       : master - Start completed.
+2026-05-31T18:47:29.130-03:00  WARN 14504 --- [psyke] [main] org.hibernate.orm.deprecation            : HHH90000025: PostgreSQLDialect does not need to be specified explicitly using 'hibernate.dialect' (remove the property setting and it will be selected by default)
+2026-05-31T18:47:29.140-03:00  INFO 14504 --- [psyke] [main] org.hibernate.orm.connections.pooling    : HHH10001005: Database info:
+	Database JDBC URL [jdbc:postgresql://localhost:5432/psyke_master]
+	Database driver: PostgreSQL JDBC Driver
+	Database dialect: PostgreSQLDialect
+	Database version: 18.4
+	Default catalog/schema: psyke_master/public
+	Autocommit mode: undefined/unknown
+	Isolation level: READ_COMMITTED [default READ_COMMITTED]
+	JDBC fetch size: none
+	Pool: DataSourceConnectionProvider
+	Minimum pool size: undefined/unknown
+	Maximum pool size: undefined/unknown
+2026-05-31T18:47:29.403-03:00  INFO 14504 --- [psyke] [main] org.hibernate.orm.core                   : HHH000489: No JTA platform available (set 'hibernate.transaction.jta.platform' to enable JTA platform integration)
+2026-05-31T18:47:29.405-03:00  INFO 14504 --- [psyke] [main] j.LocalContainerEntityManagerFactoryBean : Initialized JPA EntityManagerFactory for persistence unit 'default'
+2026-05-31T18:47:29.417-03:00  INFO 14504 --- [psyke] [main] com.br.psyke.psyke.ai.AiService          : AiService initialized: enabled=false, model=gpt-4o-mini, url=https://api.openai.com/v1
+2026-05-31T18:47:29.973-03:00  WARN 14504 --- [psyke] [main] .s.a.UserDetailsServiceAutoConfiguration : 
+
+Using generated security password: 7c778665-9d10-445a-9725-1619c21cafe7
+
+This generated password is for development use only. Your security configuration must be updated before running your application in production.
+
+2026-05-31T18:47:29.975-03:00  INFO 14504 --- [psyke] [main] r$InitializeUserDetailsManagerConfigurer : Global AuthenticationManager configured with UserDetailsService bean with name inMemoryUserDetailsManager
+2026-05-31T18:47:30.515-03:00  INFO 14504 --- [psyke] [main] o.s.b.a.e.web.EndpointLinksResolver      : Exposing 1 endpoint beneath base path '/actuator'
+2026-05-31T18:47:30.541-03:00  INFO 14504 --- [psyke] [main] o.s.boot.tomcat.TomcatWebServer          : Tomcat started on port 57452 (http) with context path '/'
+2026-05-31T18:47:30.548-03:00  INFO 14504 --- [psyke] [main] c.br.psyke.psyke.PsykeApplicationTests   : Started PsykeApplicationTests in 2.558 seconds (process running for 25.631)
+2026-05-31T18:47:30.576-03:00  INFO 14504 --- [psyke] [main] org.flywaydb.core.FlywayExecutor         : Database: jdbc:postgresql://localhost:5432/psyke_master (PostgreSQL 18.4)
+2026-05-31T18:47:30.596-03:00  INFO 14504 --- [psyke] [main] o.f.core.internal.command.DbValidate     : Successfully validated 2 migrations (execution time 00:00.008s)
+2026-05-31T18:47:30.604-03:00  INFO 14504 --- [psyke] [main] o.f.core.internal.command.DbMigrate      : Current version of schema "public": 2
+2026-05-31T18:47:30.605-03:00  INFO 14504 --- [psyke] [main] o.f.core.internal.command.DbMigrate      : Schema "public" is up to date. No migration necessary.
+2026-05-31T18:47:30.606-03:00  INFO 14504 --- [psyke] [main] com.br.psyke.psyke.config.FlywayConfig   : Master Flyway migrations: 0 applied, 0 skipped
+2026-05-31T18:47:30.607-03:00  WARN 14504 --- [psyke] [main] o.s.core.events.SpringDocAppInitializer  : SpringDoc /v3/api-docs endpoint is enabled by default. To disable it in production, set the property 'springdoc.api-docs.enabled=false'
+2026-05-31T18:47:30.607-03:00  WARN 14504 --- [psyke] [main] o.s.core.events.SpringDocAppInitializer  : SpringDoc /swagger-ui.html endpoint is enabled by default. To disable it in production, set the property 'springdoc.swagger-ui.enabled=false'
+2026-05-31T18:47:30.620-03:00  INFO 14504 --- [psyke] [http-nio-auto-2-exec-1] o.a.c.c.C.[Tomcat-1].[localhost].[/]     : Initializing Spring DispatcherServlet 'dispatcherServlet'
+2026-05-31T18:47:30.621-03:00  INFO 14504 --- [psyke] [http-nio-auto-2-exec-1] o.s.web.servlet.DispatcherServlet        : Initializing Servlet 'dispatcherServlet'
+2026-05-31T18:47:30.623-03:00  INFO 14504 --- [psyke] [http-nio-auto-2-exec-1] o.s.web.servlet.DispatcherServlet        : Completed initialization in 2 ms
+2026-05-31T18:47:30.671-03:00  INFO 14504 --- [psyke] [http-nio-auto-2-exec-1] org.flywaydb.core.FlywayExecutor         : Database: jdbc:postgresql://localhost:5432/psyke_master (PostgreSQL 18.4)
+2026-05-31T18:47:30.685-03:00  INFO 14504 --- [psyke] [http-nio-auto-2-exec-1] o.f.core.internal.database.base.Schema   : Creating schema "tenant_cdf638e" ...
+2026-05-31T18:47:30.691-03:00  INFO 14504 --- [psyke] [http-nio-auto-2-exec-1] o.f.c.i.s.JdbcTableSchemaHistory         : Creating Schema History table "tenant_cdf638e"."flyway_schema_history" ...
+2026-05-31T18:47:30.786-03:00  INFO 14504 --- [psyke] [http-nio-auto-2-exec-1] o.f.core.internal.command.DbMigrate      : Current version of schema "tenant_cdf638e": null
+2026-05-31T18:47:30.789-03:00  INFO 14504 --- [psyke] [http-nio-auto-2-exec-1] o.f.core.internal.command.DbMigrate      : Migrating schema "tenant_cdf638e" to version "1 - create tenant schema"
+2026-05-31T18:47:30.790-03:00  WARN 14504 --- [psyke] [http-nio-auto-2-exec-1] o.f.c.i.s.DefaultSqlScriptExecutor       : DB: extensão "pgcrypto" já existe, ignorando (SQL State: 42710 - Error Code: 0)
+2026-05-31T18:47:30.824-03:00  INFO 14504 --- [psyke] [http-nio-auto-2-exec-1] o.f.core.internal.command.DbMigrate      : Migrating schema "tenant_cdf638e" to version "2 - create availability tables"
+2026-05-31T18:47:30.857-03:00  INFO 14504 --- [psyke] [http-nio-auto-2-exec-1] o.f.core.internal.command.DbMigrate      : Migrating schema "tenant_cdf638e" to version "3 - create appointment tables"
+2026-05-31T18:47:30.887-03:00  INFO 14504 --- [psyke] [http-nio-auto-2-exec-1] o.f.core.internal.command.DbMigrate      : Migrating schema "tenant_cdf638e" to version "4 - create waiting list and cancellation logs"
+2026-05-31T18:47:30.910-03:00  INFO 14504 --- [psyke] [http-nio-auto-2-exec-1] o.f.core.internal.command.DbMigrate      : Migrating schema "tenant_cdf638e" to version "5 - create prontuario tables"
+2026-05-31T18:47:30.950-03:00  INFO 14504 --- [psyke] [http-nio-auto-2-exec-1] o.f.core.internal.command.DbMigrate      : Migrating schema "tenant_cdf638e" to version "6 - add missing indexes and fields"
+2026-05-31T18:47:30.957-03:00  WARN 14504 --- [psyke] [http-nio-auto-2-exec-1] o.f.c.i.s.DefaultSqlScriptExecutor       : DB: relação "idx_appointments_professional_time" já existe, ignorando (SQL State: 42P07 - Error Code: 0)
+2026-05-31T18:47:30.962-03:00  INFO 14504 --- [psyke] [http-nio-auto-2-exec-1] o.f.core.internal.command.DbMigrate      : Successfully applied 6 migrations to schema "tenant_cdf638e", now at version v6 (execution time 00:00.133s)
+2026-05-31T18:47:30.963-03:00  INFO 14504 --- [psyke] [http-nio-auto-2-exec-1] c.b.p.p.security.TenantAwareDataSource   : DataSource for tenant 1946b72d-479c-4415-a409-14b29c14a805 (schema tenant_cdf638e)
+2026-05-31T18:47:31.288-03:00  INFO 14504 --- [psyke] [http-nio-auto-2-exec-2] org.flywaydb.core.FlywayExecutor         : Database: jdbc:postgresql://localhost:5432/psyke_master (PostgreSQL 18.4)
+2026-05-31T18:47:31.301-03:00  INFO 14504 --- [psyke] [http-nio-auto-2-exec-2] o.f.core.internal.database.base.Schema   : Creating schema "tenant_ltc7c3bd" ...
+2026-05-31T18:47:31.305-03:00  INFO 14504 --- [psyke] [http-nio-auto-2-exec-2] o.f.c.i.s.JdbcTableSchemaHistory         : Creating Schema History table "tenant_ltc7c3bd"."flyway_schema_history" ...
+2026-05-31T18:47:31.327-03:00  INFO 14504 --- [psyke] [http-nio-auto-2-exec-2] o.f.core.internal.command.DbMigrate      : Current version of schema "tenant_ltc7c3bd": null
+2026-05-31T18:47:31.330-03:00  INFO 14504 --- [psyke] [http-nio-auto-2-exec-2] o.f.core.internal.command.DbMigrate      : Migrating schema "tenant_ltc7c3bd" to version "1 - create tenant schema"
+2026-05-31T18:47:31.331-03:00  WARN 14504 --- [psyke] [http-nio-auto-2-exec-2] o.f.c.i.s.DefaultSqlScriptExecutor       : DB: extensão "pgcrypto" já existe, ignorando (SQL State: 42710 - Error Code: 0)
+2026-05-31T18:47:31.380-03:00  INFO 14504 --- [psyke] [http-nio-auto-2-exec-2] o.f.core.internal.command.DbMigrate      : Migrating schema "tenant_ltc7c3bd" to version "2 - create availability tables"
+2026-05-31T18:47:31.425-03:00  INFO 14504 --- [psyke] [http-nio-auto-2-exec-2] o.f.core.internal.command.DbMigrate      : Migrating schema "tenant_ltc7c3bd" to version "3 - create appointment tables"
+2026-05-31T18:47:31.466-03:00  INFO 14504 --- [psyke] [http-nio-auto-2-exec-2] o.f.core.internal.command.DbMigrate      : Migrating schema "tenant_ltc7c3bd" to version "4 - create waiting list and cancellation logs"
+2026-05-31T18:47:31.520-03:00  INFO 14504 --- [psyke] [http-nio-auto-2-exec-2] o.f.core.internal.command.DbMigrate      : Migrating schema "tenant_ltc7c3bd" to version "5 - create prontuario tables"
+2026-05-31T18:47:31.560-03:00  INFO 14504 --- [psyke] [http-nio-auto-2-exec-2] o.f.core.internal.command.DbMigrate      : Migrating schema "tenant_ltc7c3bd" to version "6 - add missing indexes and fields"
+2026-05-31T18:47:31.567-03:00  WARN 14504 --- [psyke] [http-nio-auto-2-exec-2] o.f.c.i.s.DefaultSqlScriptExecutor       : DB: relação "idx_appointments_professional_time" já existe, ignorando (SQL State: 42P07 - Error Code: 0)
+2026-05-31T18:47:31.573-03:00  INFO 14504 --- [psyke] [http-nio-auto-2-exec-2] o.f.core.internal.command.DbMigrate      : Successfully applied 6 migrations to schema "tenant_ltc7c3bd", now at version v6 (execution time 00:00.155s)
+2026-05-31T18:47:31.574-03:00  INFO 14504 --- [psyke] [http-nio-auto-2-exec-2] c.b.p.p.security.TenantAwareDataSource   : DataSource for tenant a1661421-d25d-4236-8038-7855a575706b (schema tenant_ltc7c3bd)
+2026-05-31T18:47:31.940-03:00  INFO 14504 --- [psyke] [http-nio-auto-2-exec-4] org.flywaydb.core.FlywayExecutor         : Database: jdbc:postgresql://localhost:5432/psyke_master (PostgreSQL 18.4)
+2026-05-31T18:47:31.954-03:00  INFO 14504 --- [psyke] [http-nio-auto-2-exec-4] o.f.core.internal.database.base.Schema   : Creating schema "tenant_dupce0255" ...
+2026-05-31T18:47:31.956-03:00  INFO 14504 --- [psyke] [http-nio-auto-2-exec-4] o.f.c.i.s.JdbcTableSchemaHistory         : Creating Schema History table "tenant_dupce0255"."flyway_schema_history" ...
+2026-05-31T18:47:31.977-03:00  INFO 14504 --- [psyke] [http-nio-auto-2-exec-4] o.f.core.internal.command.DbMigrate      : Current version of schema "tenant_dupce0255": null
+2026-05-31T18:47:31.982-03:00  INFO 14504 --- [psyke] [http-nio-auto-2-exec-4] o.f.core.internal.command.DbMigrate      : Migrating schema "tenant_dupce0255" to version "1 - create tenant schema"
+2026-05-31T18:47:31.983-03:00  WARN 14504 --- [psyke] [http-nio-auto-2-exec-4] o.f.c.i.s.DefaultSqlScriptExecutor       : DB: extensão "pgcrypto" já existe, ignorando (SQL State: 42710 - Error Code: 0)
+2026-05-31T18:47:32.018-03:00  INFO 14504 --- [psyke] [http-nio-auto-2-exec-4] o.f.core.internal.command.DbMigrate      : Migrating schema "tenant_dupce0255" to version "2 - create availability tables"
+2026-05-31T18:47:32.060-03:00  INFO 14504 --- [psyke] [http-nio-auto-2-exec-4] o.f.core.internal.command.DbMigrate      : Migrating schema "tenant_dupce0255" to version "3 - create appointment tables"
+2026-05-31T18:47:32.087-03:00  INFO 14504 --- [psyke] [http-nio-auto-2-exec-4] o.f.core.internal.command.DbMigrate      : Migrating schema "tenant_dupce0255" to version "4 - create waiting list and cancellation logs"
+2026-05-31T18:47:32.108-03:00  INFO 14504 --- [psyke] [http-nio-auto-2-exec-4] o.f.core.internal.command.DbMigrate      : Migrating schema "tenant_dupce0255" to version "5 - create prontuario tables"
+2026-05-31T18:47:32.144-03:00  INFO 14504 --- [psyke] [http-nio-auto-2-exec-4] o.f.core.internal.command.DbMigrate      : Migrating schema "tenant_dupce0255" to version "6 - add missing indexes and fields"
+2026-05-31T18:47:32.151-03:00  WARN 14504 --- [psyke] [http-nio-auto-2-exec-4] o.f.c.i.s.DefaultSqlScriptExecutor       : DB: relação "idx_appointments_professional_time" já existe, ignorando (SQL State: 42P07 - Error Code: 0)
+2026-05-31T18:47:32.155-03:00  INFO 14504 --- [psyke] [http-nio-auto-2-exec-4] o.f.core.internal.command.DbMigrate      : Successfully applied 6 migrations to schema "tenant_dupce0255", now at version v6 (execution time 00:00.121s)
+2026-05-31T18:47:32.156-03:00  INFO 14504 --- [psyke] [http-nio-auto-2-exec-4] c.b.p.p.security.TenantAwareDataSource   : DataSource for tenant 85dcdd7a-3580-4384-acd6-23b02bee3a9f (schema tenant_dupce0255)
+2026-05-31T18:47:32.601-03:00  INFO 14504 --- [psyke] [SpringApplicationShutdownHook] o.s.boot.tomcat.GracefulShutdown         : Commencing graceful shutdown. Waiting for active requests to complete
+2026-05-31T18:47:32.636-03:00  INFO 14504 --- [psyke] [tomcat-shutdown] o.s.boot.tomcat.GracefulShutdown         : Graceful shutdown complete
+2026-05-31T18:47:32.649-03:00  INFO 14504 --- [psyke] [SpringApplicationShutdownHook] j.LocalContainerEntityManagerFactoryBean : Closing JPA EntityManagerFactory for persistence unit 'default'
+2026-05-31T18:47:32.651-03:00  INFO 14504 --- [psyke] [SpringApplicationShutdownHook] com.zaxxer.hikari.HikariDataSource       : master - Shutdown initiated...
+2026-05-31T18:47:32.657-03:00  INFO 14504 --- [psyke] [SpringApplicationShutdownHook] com.zaxxer.hikari.HikariDataSource       : master - Shutdown completed.
+2026-05-31T18:47:32.674-03:00  INFO 14504 --- [psyke] [SpringApplicationShutdownHook] o.s.boot.tomcat.GracefulShutdown         : Commencing graceful shutdown. Waiting for active requests to complete
+2026-05-31T18:47:32.713-03:00  INFO 14504 --- [psyke] [tomcat-shutdown] o.s.boot.tomcat.GracefulShutdown         : Graceful shutdown complete
+2026-05-31T18:47:32.719-03:00  INFO 14504 --- [psyke] [SpringApplicationShutdownHook] j.LocalContainerEntityManagerFactoryBean : Closing JPA EntityManagerFactory for persistence unit 'default'
+2026-05-31T18:47:32.720-03:00  INFO 14504 --- [psyke] [SpringApplicationShutdownHook] com.zaxxer.hikari.HikariDataSource       : master - Shutdown initiated...
+2026-05-31T18:47:32.724-03:00  INFO 14504 --- [psyke] [SpringApplicationShutdownHook] com.zaxxer.hikari.HikariDataSource       : master - Shutdown completed.

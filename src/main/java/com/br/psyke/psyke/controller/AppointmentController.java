@@ -6,6 +6,7 @@ import com.br.psyke.psyke.dto.AppointmentResponse;
 import com.br.psyke.psyke.dto.CalendarEvent;
 import com.br.psyke.psyke.dto.CreateSessionRequest;
 import com.br.psyke.psyke.dto.StatusUpdateRequest;
+import com.br.psyke.psyke.dto.UpdateAppointmentRequest;
 import com.br.psyke.psyke.model.Appointment;
 import com.br.psyke.psyke.service.AppointmentService;
 import com.br.psyke.psyke.service.RecurrenceService;
@@ -61,6 +62,14 @@ public class AppointmentController {
     @Operation(summary = "Get appointment by ID")
     public ResponseEntity<AppointmentResponse> findById(@PathVariable UUID id) {
         return ResponseEntity.ok(service.findById(id));
+    }
+
+    @PutMapping("/{id}")
+    @Operation(summary = "Update appointment fields", description = "Updates notes and/or room of an existing appointment")
+    public ResponseEntity<AppointmentResponse> update(
+            @PathVariable UUID id,
+            @Valid @RequestBody UpdateAppointmentRequest req) {
+        return ResponseEntity.ok(service.update(id, req));
     }
 
     @PatchMapping("/{id}/status")

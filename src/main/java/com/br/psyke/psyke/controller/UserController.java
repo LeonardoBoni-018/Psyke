@@ -2,6 +2,7 @@ package com.br.psyke.psyke.controller;
 
 import com.br.psyke.psyke.dto.CreateUserRequest;
 import com.br.psyke.psyke.dto.UpdateRolesRequest;
+import com.br.psyke.psyke.dto.UpdateUserRequest;
 import com.br.psyke.psyke.dto.UserResponse;
 import com.br.psyke.psyke.security.TenantContext;
 import com.br.psyke.psyke.service.UserService;
@@ -28,6 +29,27 @@ public class UserController {
     @Operation(summary = "List users in the current tenant with pagination")
     public ResponseEntity<Page<UserResponse>> findAll(Pageable pageable) {
         return ResponseEntity.ok(service.findAll(UUID.fromString(TenantContext.getTenantId()), pageable));
+    }
+
+    @GetMapping("/{id}")
+    @Operation(summary = "Get user by ID")
+    public ResponseEntity<UserResponse> findById(@PathVariable UUID id) {
+        return ResponseEntity.ok(service.findById(id));
+    }
+
+    @PutMapping("/{id}")
+    @Operation(summary = "Update an existing user")
+    public ResponseEntity<UserResponse> update(
+            @PathVariable UUID id,
+            @Valid @RequestBody UpdateUserRequest req) {
+        return ResponseEntity.ok(service.update(id, req));
+    }
+
+    @DeleteMapping("/{id}")
+    @Operation(summary = "Deactivate a user")
+    public ResponseEntity<Void> delete(@PathVariable UUID id) {
+        service.delete(id);
+        return ResponseEntity.noContent().build();
     }
 
     @PostMapping

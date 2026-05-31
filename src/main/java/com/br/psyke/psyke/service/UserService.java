@@ -2,6 +2,7 @@ package com.br.psyke.psyke.service;
 
 import com.br.psyke.psyke.dto.CreateUserRequest;
 import com.br.psyke.psyke.dto.UpdateRolesRequest;
+import com.br.psyke.psyke.dto.UpdateUserRequest;
 import com.br.psyke.psyke.dto.UserResponse;
 import com.br.psyke.psyke.exception.ResourceNotFoundException;
 import com.br.psyke.psyke.exception.UserAlreadyExistsException;
@@ -29,6 +30,34 @@ public class UserService {
 
     public Page<UserResponse> findAll(UUID tenantId, Pageable pageable) {
         return users.findByTenantId(tenantId, pageable).map(this::toResponse);
+    }
+
+    public UserResponse findById(UUID id) {
+        return users.findByIdWithRoles(id)
+                .map(this::toResponse)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+    }
+
+    @Transactional
+    public UserResponse update(UUID id, UpdateUserRequest req) {
+        var user = users.findByIdWithRoles(id)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+
+        if (req.fullName() != null) user.setFullName(req.fullName());
+        if (req.cpf() != null) user.setCpf(req.cpf());
+        if (req.phone() != null) user.setPhone(req.phone());
+        if (req.active() != null) user.setActive(req.active());
+
+        user = users.save(user);
+        return toResponse(user);
+    }
+
+    @Transactional
+    public void delete(UUID id) {
+        var user = users.findByIdWithRoles(id)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+        user.setActive(false);
+        users.save(user);
     }
 
     @Transactional
