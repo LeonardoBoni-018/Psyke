@@ -2,33 +2,63 @@ package com.br.psyke.psyke.config;
 
 import com.br.psyke.psyke.security.JwtAuthenticationFilter;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.CorsConfigurationSource;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+import java.util.Arrays;
+import java.util.List;
 
 @Configuration
 @EnableWebSecurity
+@EnableMethodSecurity
 @RequiredArgsConstructor
 public class SecurityConfig {
 
     private final JwtAuthenticationFilter filter;
 
+    @Value("${app.cors.allowed-origins:http://localhost:5173}")
+    private String allowedOrigins;
+
     @Bean
     public SecurityFilterChain chain(HttpSecurity http) throws Exception {
-        return http.csrf(c -> c.disable())
+        return http
+            .csrf(c -> c.disable())
+            .cors(c -> c.configurationSource(corsConfigurationSource()))
             .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(a -> a
                 .requestMatchers("/auth/login", "/auth/refresh").permitAll()
                 .requestMatchers(HttpMethod.POST, "/tenants").permitAll()
                 .requestMatchers("/confirm/**", "/cancel/**").permitAll()
-                .requestMatchers("/actuator/**", "/error", "/swagger-ui.html", "/swagger-ui/**", "/v3/api-docs/**").permitAll()
+                .requestMatchers("/actuator/health", "/actuator/info").permitAll()
+                .requestMatchers("/actuator/**").hasRole("ADMIN")
+                .requestMatchers("/swagger-ui.html", "/swagger-ui/**", "/v3/api-docs/**").permitAll()
+                .requestMatchers("/error").permitAll()
                 .anyRequest().authenticated())
             .addFilterBefore(filter, UsernamePasswordAuthenticationFilter.class)
             .build();
+    }
+
+    @Bean
+    public CorsConfigurationSource corsConfigurationSource() {
+        var config = new CorsConfiguration();
+        config.setAllowedOrigins(Arrays.asList(allowedOrigins.split(",")));
+        config.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
+        config.setAllowedHeaders(List.of("Authorization", "Content-Type", "X-Tenant-ID"));
+        config.setExposedHeaders(List.of("Authorization"));
+        config.setAllowCredentials(true);
+        config.setMaxAge(3600L);
+        var source = new UrlBasedCorsConfigurationSource();
+        source.registerCorsConfiguration("/**", config);
+        return source;
     }
 }

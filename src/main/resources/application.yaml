@@ -20,19 +20,19 @@ spring:
   datasource:
     url: ${PSYKE_DB_URL:jdbc:postgresql://localhost:5432/psyke_master}
     username: ${PSYKE_DB_USER:postgres}
-    password: ${PSYKE_DB_PASS:123456}
+    password: ${PSYKE_DB_PASS:postgres}
 
   jpa:
     hibernate:
       ddl-auto: none
     open-in-view: false
+    defer-datasource-initialization: true
     properties:
       hibernate:
-        dialect: org.hibernate.dialect.PostgreSQLDialect   # ← LINHA 1: diz ao Hibernate qual banco é, sem precisar conectar
+        dialect: org.hibernate.dialect.PostgreSQLDialect
         jdbc:
           lob:
             non_contextual_creation: true
-    defer-datasource-initialization: true                  # ← LINHA 2: garante que o Flyway roda antes do JPA validar
 
 logging:
   level:
@@ -44,8 +44,31 @@ logging:
     rollingpolicy:
       max-history: 7
       max-file-size: 10MB
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] [tenant:%X{tenantId}] %-5level %logger{36} - %msg%n"
 
 app:
   jwt:
     secret: ${PSYKE_JWT_SECRET:CHANGE_ME_CHANGE_ME_CHANGE_ME_CHANGE_ME_CHANGE_ME_CHANGE_ME_CHANGE_ME}
     expiration-ms: ${PSYKE_JWT_EXPIRATION_MS:900000}
+    refresh-expiration-ms: ${PSYKE_JWT_REFRESH_EXPIRATION_MS:604800000}
+  cors:
+    allowed-origins: ${PSYKE_CORS_ORIGINS:http://localhost:5173,http://localhost:3000}
+
+psyke:
+  ai:
+    enabled: ${PSYKE_AI_ENABLED:false}
+    api-key: ${PSYKE_AI_API_KEY:}
+    model: ${PSYKE_AI_MODEL:gpt-4o-mini}
+    api-url: ${PSYKE_AI_API_URL:https://api.openai.com/v1}
+
+---
+spring:
+  config:
+    activate:
+      on-profile: prod
+  jpa:
+    show-sql: false
+  logging:
+    level:
+      com.br.psyke.psyke: INFO

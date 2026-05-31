@@ -16,6 +16,7 @@ import com.br.psyke.psyke.repository.AppointmentRepository;
 import com.br.psyke.psyke.repository.RoomRepository;
 import com.br.psyke.psyke.repository.SlotRepository;
 import com.br.psyke.psyke.repository.UserRepository;
+import com.br.psyke.psyke.security.TenantContext;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -60,18 +61,27 @@ public class AppointmentService {
     }
 
     public List<CalendarEvent> findCalendarEvents(UUID professionalId, LocalDateTime from, LocalDateTime to) {
+        var clinicId = TenantContext.getClinicId() != null
+                ? UUID.fromString(TenantContext.getClinicId()) : null;
+
         var appointments = professionalId != null
             ? appointmentRepo.findByProfessionalIdAndStartTimeBetweenOrderByStartTime(professionalId, from, to)
             : appointmentRepo.findAllByFilters(null, null, null, from, to);
-        return appointments.stream().map(a -> {
-            var color = CALENDAR_COLORS.getOrDefault(a.getStatus(), "#3788d8");
-            return new CalendarEvent(a.getId(), a.getNotes() != null ? a.getNotes() : "",
-                a.getStartTime().toString(), a.getEndTime().toString(),
-                color, color, "#ffffff",
-                Map.of("status", a.getStatus().name(), "patientId", a.getPatientId().toString(),
-                       "professionalId", a.getProfessionalId().toString(),
-                       "roomId", a.getRoomId() != null ? a.getRoomId().toString() : ""));
-        }).toList();
+
+        return appointments.stream()
+            .filter(a -> clinicId == null || clinicId.equals(a.getClinicId()))
+            .map(a -> {
+                var color = CALENDAR_COLORS.getOrDefault(a.getStatus(), "#3788d8");
+                var title = (a.getNotes() != null && !a.getNotes().isBlank())
+                        ? a.getNotes()
+                        : a.getStatus().name();
+                return new CalendarEvent(a.getId(), title,
+                    a.getStartTime().toString(), a.getEndTime().toString(),
+                    color, color, "#ffffff",
+                    Map.of("status", a.getStatus().name(), "patientId", a.getPatientId().toString(),
+                           "professionalId", a.getProfessionalId().toString(),
+                           "roomId", a.getRoomId() != null ? a.getRoomId().toString() : ""));
+            }).toList();
     }
 
     @Transactional

@@ -110,7 +110,8 @@ public class AuthService {
 
     private String saveRefresh(UUID userId, String ip, String ua) {
         return refreshTokens.save(RefreshToken.builder().userId(userId)
-                .token(jwt.generateRefreshToken(userId)).expiresAt(OffsetDateTime.now().plusDays(7))
+                .token(jwt.generateRefreshToken(userId))
+                .expiresAt(OffsetDateTime.now().plusSeconds(jwt.refreshExpirationMs() / 1000))
                 .sourceIp(ip).userAgent(ua).build()).getToken();
     }
 

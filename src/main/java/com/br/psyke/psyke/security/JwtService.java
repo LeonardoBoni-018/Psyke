@@ -19,46 +19,68 @@ public class JwtService {
 
     private final SecretKey secretKey;
     private final long expirationMs;
+    private final long refreshExpirationMs;
 
-    public JwtService(@Value("${app.jwt.secret}") String secret, @Value("${app.jwt.expiration-ms}") long expMs) {
+    public JwtService(
+            @Value("${app.jwt.secret}") String secret,
+            @Value("${app.jwt.expiration-ms}") long expMs,
+            @Value("${app.jwt.refresh-expiration-ms:604800000}") long refreshExpMs) {
         this.secretKey = Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8));
         this.expirationMs = expMs;
+        this.refreshExpirationMs = refreshExpMs;
     }
 
     public String generateAccessToken(TokenPayload p) {
         var now = Instant.now();
-        return Jwts.builder().subject(p.userId().toString()).issuer("psyke")
-                .issuedAt(Date.from(now)).expiration(Date.from(now.plusMillis(expirationMs)))
-                .claims(Map.of("tenant_id", p.tenantId().toString(), "clinic_id",
-                    p.clinicId() != null ? p.clinicId().toString() : "",
-                    "roles", p.roles(), "name", p.name(), "email", p.email()))
-                .signWith(secretKey, Jwts.SIG.HS256).compact();
+        return Jwts.builder()
+                .subject(p.userId().toString())
+                .issuer("psyke")
+                .issuedAt(Date.from(now))
+                .expiration(Date.from(now.plusMillis(expirationMs)))
+                .claims(Map.of(
+                    "tenant_id", p.tenantId().toString(),
+                    "clinic_id", p.clinicId() != null ? p.clinicId().toString() : "",
+                    "roles", p.roles(),
+                    "name", p.name(),
+                    "email", p.email()))
+                .signWith(secretKey, Jwts.SIG.HS256)
+                .compact();
     }
 
     public String generateRefreshToken(UUID userId) {
         var now = Instant.now();
-        return Jwts.builder().subject(userId.toString()).issuer("psyke")
-                .issuedAt(Date.from(now)).expiration(Date.from(now.plusMillis(604800000L)))
-                .id(UUID.randomUUID().toString()).signWith(secretKey, Jwts.SIG.HS256).compact();
+        return Jwts.builder()
+                .subject(userId.toString())
+                .issuer("psyke")
+                .issuedAt(Date.from(now))
+                .expiration(Date.from(now.plusMillis(refreshExpirationMs)))
+                .id(UUID.randomUUID().toString())
+                .signWith(secretKey, Jwts.SIG.HS256)
+                .compact();
     }
 
     public Claims extractClaims(String token) {
-        return Jwts.parser().verifyWith(secretKey).build().parseSignedClaims(token).getPayload();
+        return Jwts.parser().verifyWith(secretKey).build()
+                .parseSignedClaims(token).getPayload();
     }
 
     public boolean isValid(String token) {
         try { extractClaims(token); return true; }
         catch (ExpiredJwtException e) { log.warn("JWT expired"); }
-        catch (JwtException e) { log.warn("JWT invalid"); }
+        catch (JwtException e) { log.warn("JWT invalid: {}", e.getMessage()); }
         return false;
     }
 
-    public UUID userId(String token) { return UUID.fromString(extractClaims(token).getSubject()); }
+    public UUID userId(String token)   { return UUID.fromString(extractClaims(token).getSubject()); }
     public String tenantId(String token) { return extractClaims(token).get("tenant_id", String.class); }
     public String clinicId(String token) { return extractClaims(token).get("clinic_id", String.class); }
+
     @SuppressWarnings("unchecked")
     public List<String> roles(String token) { return extractClaims(token).get("roles", List.class); }
-    public long expirationMs() { return expirationMs; }
 
-    public record TokenPayload(UUID userId, UUID tenantId, UUID clinicId, String name, String email, List<String> roles) {}
+    public long expirationMs() { return expirationMs; }
+    public long refreshExpirationMs() { return refreshExpirationMs; }
+
+    public record TokenPayload(UUID userId, UUID tenantId, UUID clinicId,
+                               String name, String email, List<String> roles) {}
 }

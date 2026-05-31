@@ -5,6 +5,7 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
+import org.slf4j.MDC;
 import org.springframework.lang.NonNull;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -13,6 +14,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 import org.springframework.web.filter.OncePerRequestFilter;
 import java.io.IOException;
+import java.util.UUID;
 
 @Component
 @RequiredArgsConstructor
@@ -23,16 +25,30 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     @Override
     protected void doFilterInternal(@NonNull HttpServletRequest req, @NonNull HttpServletResponse res,
             @NonNull FilterChain chain) throws ServletException, IOException {
-        var token = extract(req);
-        if (token != null && jwt.isValid(token)) {
-            TenantContext.setTenantId(jwt.tenantId(token));
-            TenantContext.setClinicId(jwt.clinicId(token));
-            var auth = new UsernamePasswordAuthenticationToken(jwt.userId(token), null,
-                jwt.roles(token).stream().map(SimpleGrantedAuthority::new).toList());
-            SecurityContextHolder.getContext().setAuthentication(auth);
+        try {
+            var token = extract(req);
+            if (token != null && jwt.isValid(token)) {
+                var tenantId = jwt.tenantId(token);
+                var userId   = jwt.userId(token).toString();
+
+                TenantContext.setTenantId(tenantId);
+                TenantContext.setClinicId(jwt.clinicId(token));
+
+                MDC.put("tenantId",  tenantId);
+                MDC.put("userId",    userId);
+                MDC.put("requestId", UUID.randomUUID().toString().substring(0, 8));
+
+                var auth = new UsernamePasswordAuthenticationToken(
+                        jwt.userId(token), null,
+                        jwt.roles(token).stream().map(SimpleGrantedAuthority::new).toList());
+                SecurityContextHolder.getContext().setAuthentication(auth);
+            }
+            chain.doFilter(req, res);
+        } finally {
+            TenantContext.clear();
+            MDC.clear();
+            SecurityContextHolder.clearContext();
         }
-        try { chain.doFilter(req, res); }
-        finally { TenantContext.clear(); }
     }
 
     private String extract(HttpServletRequest req) {

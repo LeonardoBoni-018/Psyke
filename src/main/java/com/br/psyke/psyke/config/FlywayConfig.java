@@ -18,9 +18,11 @@ public class FlywayConfig {
     @Bean
     public CommandLineRunner migrate() {
         return a -> {
-            Flyway.configure().dataSource(master).schemas("public")
-                .locations("classpath:db/migration/master").baselineOnMigrate(true).load().migrate();
-            log.info("Master migrations done");
+            var flyway = Flyway.configure().dataSource(master).schemas("public")
+                    .locations("classpath:db/migration/master").baselineOnMigrate(true).load();
+            var result = flyway.migrate();
+            log.info("Master Flyway migrations: {} applied, {} skipped",
+                    result.migrationsExecuted, result.warnings.size());
         };
     }
 }
