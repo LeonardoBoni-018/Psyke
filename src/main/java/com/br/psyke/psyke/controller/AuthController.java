@@ -37,4 +37,28 @@ public class AuthController {
     public ResponseEntity<UserResponse> me(Authentication a) {
         return ResponseEntity.ok(svc.me((UUID) a.getPrincipal()));
     }
+
+    @PostMapping("/forgot-password")
+    public ResponseEntity<Void> forgotPassword(@Valid @RequestBody ForgotPasswordRequest r) {
+        svc.forgotPassword(r);
+        return ResponseEntity.ok().build();
+    }
+
+    @PostMapping("/reset-password")
+    public ResponseEntity<Void> resetPassword(@Valid @RequestBody ResetPasswordRequest r) {
+        svc.resetPassword(r);
+        return ResponseEntity.ok().build();
+    }
+
+    @PostMapping("/verify-email")
+    public ResponseEntity<Void> verifyEmail(@Valid @RequestBody VerifyEmailRequest r) {
+        svc.verifyEmail(r.token());
+        return ResponseEntity.ok().build();
+    }
+
+    @PostMapping("/send-verification")
+    public ResponseEntity<Void> sendVerification(Authentication a) {
+        svc.sendEmailVerification((UUID) a.getPrincipal());
+        return ResponseEntity.ok().build();
+    }
 }

@@ -28,9 +28,11 @@ public class AuthService {
     private final TenantRepository tenants;
     private final RoleRepository roles;
     private final RefreshTokenRepository refreshTokens;
+    private final PasswordResetTokenRepository passwordResetTokens;
     private final JwtService jwt;
     private final PasswordEncoder encoder;
     private final TenantAwareDataSource ds;
+    private final EmailService emailService;
     @Resource(name = "master")
     private DataSource master;
 
@@ -100,6 +102,70 @@ public class AuthService {
         var t = tenants.findById(id).orElseThrow(() -> new ResourceNotFoundException("Tenant not found"));
         return new TenantResponse(t.getId().toString(), t.getName(), t.getSlug(),
                 t.getSchemaName(), t.getPlan().name(), t.getCreatedAt().toString());
+    }
+
+    @Value("${app.base-url:http://localhost:8080}")
+    private String baseUrl;
+
+    @Transactional
+    public void forgotPassword(ForgotPasswordRequest req) {
+        var user = users.findByEmailAndTenantId(req.email(), UUID.fromString(req.tenantId()))
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+
+        var reset = passwordResetTokens.save(PasswordResetToken.builder()
+                .userId(user.getId())
+                .token(UUID.randomUUID().toString() + "-" + UUID.randomUUID())
+                .expiresAt(OffsetDateTime.now().plusHours(1))
+                .build());
+
+        var resetUrl = baseUrl + "/reset-password?token=" + reset.getToken();
+        emailService.sendPasswordReset(user.getEmail(), user.getFullName(), resetUrl);
+    }
+
+    @Transactional
+    public void resetPassword(ResetPasswordRequest req) {
+        var reset = passwordResetTokens.findByToken(req.token())
+                .orElseThrow(() -> new InvalidTokenException("Invalid or expired reset token"));
+
+        if (!reset.isValid())
+            throw new InvalidTokenException("Reset token has expired");
+
+        var user = users.findById(reset.getUserId())
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+
+        user.setPasswordHash(encoder.encode(req.newPassword()));
+        reset.setUsedAt(OffsetDateTime.now());
+    }
+
+    @Transactional
+    public void sendEmailVerification(UUID userId) {
+        var user = users.findByIdWithRoles(userId)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+
+        var vt = passwordResetTokens.save(PasswordResetToken.builder()
+                .userId(userId)
+                .token(UUID.randomUUID().toString() + "-" + UUID.randomUUID())
+                .type("VERIFY_EMAIL")
+                .expiresAt(OffsetDateTime.now().plusHours(48))
+                .build());
+
+        var verifyUrl = baseUrl + "/auth/verify-email?token=" + vt.getToken();
+        emailService.sendEmailVerification(user.getEmail(), user.getFullName(), verifyUrl);
+    }
+
+    @Transactional
+    public void verifyEmail(String token) {
+        var vt = passwordResetTokens.findByToken(token)
+                .orElseThrow(() -> new InvalidTokenException("Invalid verification token"));
+        if (!"VERIFY_EMAIL".equals(vt.getType()))
+            throw new InvalidTokenException("Invalid token type");
+        if (!vt.isValid())
+            throw new InvalidTokenException("Verification token has expired");
+
+        var user = users.findById(vt.getUserId())
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+        user.setEmailVerified(true);
+        vt.setUsedAt(OffsetDateTime.now());
     }
 
     public UserResponse me(UUID id) {

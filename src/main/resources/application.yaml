@@ -34,6 +34,18 @@ spring:
           lob:
             non_contextual_creation: true
 
+  mail:
+    host: ${PSYKE_MAIL_HOST:}
+    port: ${PSYKE_MAIL_PORT:587}
+    username: ${PSYKE_MAIL_USER:}
+    password: ${PSYKE_MAIL_PASS:}
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+
 logging:
   level:
     com.br.psyke.psyke: DEBUG
@@ -48,12 +60,15 @@ logging:
     console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] [tenant:%X{tenantId}] %-5level %logger{36} - %msg%n"
 
 app:
+  base-url: ${PSYKE_BASE_URL:http://localhost:8080}
   jwt:
     secret: ${PSYKE_JWT_SECRET:CHANGE_ME_CHANGE_ME_CHANGE_ME_CHANGE_ME_CHANGE_ME_CHANGE_ME_CHANGE_ME}
     expiration-ms: ${PSYKE_JWT_EXPIRATION_MS:900000}
     refresh-expiration-ms: ${PSYKE_JWT_REFRESH_EXPIRATION_MS:604800000}
   cors:
     allowed-origins: ${PSYKE_CORS_ORIGINS:http://localhost:5173,http://localhost:3000}
+  mail:
+    from: ${PSYKE_MAIL_FROM:noreply@psyke.com}
 
 psyke:
   ai:

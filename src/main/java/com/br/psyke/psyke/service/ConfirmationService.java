@@ -8,7 +8,9 @@ import com.br.psyke.psyke.model.Appointment;
 import com.br.psyke.psyke.model.ConfirmationToken;
 import com.br.psyke.psyke.repository.AppointmentRepository;
 import com.br.psyke.psyke.repository.ConfirmationTokenRepository;
+import com.br.psyke.psyke.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
@@ -22,6 +24,11 @@ public class ConfirmationService {
     private final ConfirmationTokenRepository tokenRepo;
     private final AppointmentRepository appointmentRepo;
     private final AppointmentEventProducer eventProducer;
+    private final EmailService emailService;
+    private final UserRepository userRepo;
+
+    @Value("${app.base-url:http://localhost:8080}")
+    private String baseUrl;
 
     public ConfirmationToken generate(UUID appointmentId, String type) {
         var appointment = appointmentRepo.findById(appointmentId)
@@ -33,7 +40,22 @@ public class ConfirmationService {
                 .type(type)
                 .expiresAt(OffsetDateTime.now().plusHours(48))
                 .build();
-        return tokenRepo.save(token);
+        var saved = tokenRepo.save(token);
+
+        userRepo.findById(appointment.getPatientId()).ifPresent(patient -> {
+            userRepo.findById(appointment.getProfessionalId()).ifPresent(professional -> {
+                var patientEmail = patient.getEmail();
+                if (patientEmail != null && !patientEmail.isBlank()) {
+                    emailService.sendConfirmation(patientEmail,
+                            patient.getFullName(), professional.getFullName(),
+                            appointment.getStartTime().toString(),
+                            baseUrl + "/confirm/" + saved.getToken(),
+                            baseUrl + "/cancel/" + saved.getToken());
+                }
+            });
+        });
+
+        return saved;
     }
 
     @Transactional
