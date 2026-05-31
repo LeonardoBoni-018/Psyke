@@ -15,4 +15,5 @@ public interface PatientRepository extends JpaRepository<Patient, UUID> {
     boolean existsByClinicIdAndCpfAndIdNot(UUID clinicId, String cpf, UUID id);
     boolean existsByClinicIdAndEmailAndIdNot(UUID clinicId, String email, UUID id);
     long countByClinicId(UUID clinicId);
+    Optional<Patient> findByClinicIdAndEmail(UUID clinicId, String email);
 }
