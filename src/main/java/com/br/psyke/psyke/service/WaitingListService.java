@@ -12,6 +12,8 @@ import com.br.psyke.psyke.repository.UserRepository;
 import com.br.psyke.psyke.repository.WaitingListRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
@@ -119,6 +121,11 @@ public class WaitingListService {
     public List<WaitingListResponse> listByProfessional(UUID professionalId) {
         return repo.findByProfessionalIdOrderByPriorityDescRequestedAtAsc(professionalId)
                 .stream().map(this::toResponse).toList();
+    }
+
+    public Page<WaitingListResponse> listByProfessional(UUID professionalId, Pageable pageable) {
+        return repo.findByProfessionalIdOrderByPriorityDescRequestedAtAsc(professionalId, pageable)
+                .map(this::toResponse);
     }
 
     private WaitingListResponse toResponse(WaitingList w) {

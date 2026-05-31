@@ -1,6 +1,8 @@
 package com.br.psyke.psyke.repository;
 
 import com.br.psyke.psyke.model.WaitingList;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import java.time.OffsetDateTime;
 import java.util.List;
@@ -16,6 +18,7 @@ public interface WaitingListRepository extends JpaRepository<WaitingList, UUID> 
         UUID professionalId, WaitingList.WaitingStatus status);
 
     List<WaitingList> findByProfessionalIdOrderByPriorityDescRequestedAtAsc(UUID professionalId);
+    Page<WaitingList> findByProfessionalIdOrderByPriorityDescRequestedAtAsc(UUID professionalId, Pageable pageable);
 
     List<WaitingList> findByStatusAndOfferedUntilBefore(
         WaitingList.WaitingStatus status, OffsetDateTime now);

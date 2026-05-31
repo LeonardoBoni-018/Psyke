@@ -232,8 +232,9 @@ class AppointmentFlowIntegrationTest {
         var listWl = rest.exchange(
             RequestEntity.get("/waiting-list?professionalId={p}", adminId)
                 .headers(authHeader()).build(),
-            new ParameterizedTypeReference<List<WaitingListResponse>>() {});
-        assertThat(listWl.getBody()).hasSize(1);
+            new ParameterizedTypeReference<java.util.Map<String, Object>>() {});
+        assertThat(listWl.getBody()).isNotNull();
+        assertThat(((java.util.List<?>) listWl.getBody().get("content"))).hasSize(1);
 
         verify(appointmentKafkaTemplate, atLeast(2)).send(any(), any(), any());
     }

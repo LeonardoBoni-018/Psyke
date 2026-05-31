@@ -7,11 +7,14 @@ import org.springframework.data.repository.query.Param;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 public interface UserRepository extends JpaRepository<User, UUID> {
     Optional<User> findByEmailAndTenantId(String email, UUID tenantId);
     boolean existsByEmailAndTenantId(String email, UUID tenantId);
     List<User> findByTenantId(UUID tenantId);
+    Page<User> findByTenantId(UUID tenantId, Pageable pageable);
 
     @Query("SELECT u FROM User u JOIN FETCH u.roles WHERE u.id = :id")
     Optional<User> findByIdWithRoles(@Param("id") UUID id);

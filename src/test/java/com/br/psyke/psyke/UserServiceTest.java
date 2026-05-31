@@ -14,6 +14,8 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import java.util.List;
@@ -104,10 +106,11 @@ class UserServiceTest {
                 .email("u1@test.com").active(true).roles(Set.of(rolePatient)).build();
         var user2 = User.builder().id(UUID.randomUUID()).tenantId(tenantId).fullName("User 2")
                 .email("u2@test.com").active(true).roles(Set.of(rolePatient)).build();
+        var pageable = PageRequest.of(0, 10);
 
-        when(users.findByTenantId(tenantId)).thenReturn(List.of(user1, user2));
+        when(users.findByTenantId(tenantId, pageable)).thenReturn(new PageImpl<>(List.of(user1, user2)));
 
-        var resp = service.findAll(tenantId);
+        var resp = service.findAll(tenantId, pageable);
         assertThat(resp).hasSize(2);
     }
 }

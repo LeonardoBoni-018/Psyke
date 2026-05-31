@@ -9,10 +9,11 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import java.util.List;
 import java.util.UUID;
 
 @RestController
@@ -24,9 +25,9 @@ public class UserController {
     private final UserService service;
 
     @GetMapping
-    @Operation(summary = "List all users in the current tenant")
-    public ResponseEntity<List<UserResponse>> findAll() {
-        return ResponseEntity.ok(service.findAll(UUID.fromString(TenantContext.getTenantId())));
+    @Operation(summary = "List users in the current tenant with pagination")
+    public ResponseEntity<Page<UserResponse>> findAll(Pageable pageable) {
+        return ResponseEntity.ok(service.findAll(UUID.fromString(TenantContext.getTenantId()), pageable));
     }
 
     @PostMapping

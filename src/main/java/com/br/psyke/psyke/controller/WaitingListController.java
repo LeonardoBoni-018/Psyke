@@ -5,10 +5,11 @@ import com.br.psyke.psyke.dto.WaitingListResponse;
 import com.br.psyke.psyke.service.WaitingListService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import java.util.List;
 import java.util.UUID;
 
 @RestController
@@ -24,9 +25,9 @@ public class WaitingListController {
     }
 
     @GetMapping
-    public ResponseEntity<List<WaitingListResponse>> listByProfessional(
-            @RequestParam UUID professionalId) {
-        return ResponseEntity.ok(service.listByProfessional(professionalId));
+    public ResponseEntity<Page<WaitingListResponse>> listByProfessional(
+            @RequestParam UUID professionalId, Pageable pageable) {
+        return ResponseEntity.ok(service.listByProfessional(professionalId, pageable));
     }
 
     @DeleteMapping("/{id}")

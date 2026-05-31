@@ -16,6 +16,8 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 @Service
 @RequiredArgsConstructor
@@ -25,8 +27,8 @@ public class UserService {
     private final RoleRepository roles;
     private final PasswordEncoder encoder;
 
-    public List<UserResponse> findAll(UUID tenantId) {
-        return users.findByTenantId(tenantId).stream().map(this::toResponse).toList();
+    public Page<UserResponse> findAll(UUID tenantId, Pageable pageable) {
+        return users.findByTenantId(tenantId, pageable).map(this::toResponse);
     }
 
     @Transactional

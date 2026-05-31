@@ -52,6 +52,11 @@ public class GlobalExceptionHandler {
         return build(HttpStatus.CONFLICT, ex.getMessage(), req);
     }
 
+    @ExceptionHandler(DuplicateResourceException.class)
+    public ResponseEntity<ErrorResponse> handle(DuplicateResourceException ex, WebRequest req) {
+        return build(HttpStatus.CONFLICT, ex.getMessage(), req);
+    }
+
     @ExceptionHandler(ResourceNotFoundException.class)
     public ResponseEntity<ErrorResponse> handle(ResourceNotFoundException ex, WebRequest req) {
         return build(HttpStatus.NOT_FOUND, ex.getMessage(), req);
@@ -68,6 +73,42 @@ public class GlobalExceptionHandler {
         var details = ex.getBindingResult().getFieldErrors().stream().map(FieldError::getDefaultMessage).toList();
         return ResponseEntity.badRequest().body(new ErrorResponse(400, "Validation Error",
             "Invalid request", req.getDescription(false).replace("uri=", ""), OffsetDateTime.now(), details));
+    }
+
+    @ExceptionHandler(org.springframework.web.HttpRequestMethodNotSupportedException.class)
+    public ResponseEntity<ErrorResponse> handle(org.springframework.web.HttpRequestMethodNotSupportedException ex, WebRequest req) {
+        return build(HttpStatus.METHOD_NOT_ALLOWED, ex.getMessage(), req);
+    }
+
+    @ExceptionHandler(org.springframework.web.HttpMediaTypeNotSupportedException.class)
+    public ResponseEntity<ErrorResponse> handle(org.springframework.web.HttpMediaTypeNotSupportedException ex, WebRequest req) {
+        return build(HttpStatus.UNSUPPORTED_MEDIA_TYPE, ex.getMessage(), req);
+    }
+
+    @ExceptionHandler(org.springframework.web.bind.MissingServletRequestParameterException.class)
+    public ResponseEntity<ErrorResponse> handle(org.springframework.web.bind.MissingServletRequestParameterException ex, WebRequest req) {
+        return build(HttpStatus.BAD_REQUEST, ex.getMessage(), req);
+    }
+
+    @ExceptionHandler(org.springframework.web.method.annotation.MethodArgumentTypeMismatchException.class)
+    public ResponseEntity<ErrorResponse> handle(org.springframework.web.method.annotation.MethodArgumentTypeMismatchException ex, WebRequest req) {
+        return build(HttpStatus.BAD_REQUEST, "Invalid parameter: " + ex.getName(), req);
+    }
+
+    @ExceptionHandler(org.springframework.dao.DataIntegrityViolationException.class)
+    public ResponseEntity<ErrorResponse> handle(org.springframework.dao.DataIntegrityViolationException ex, WebRequest req) {
+        log.warn("Data integrity violation: {}", ex.getMessage());
+        return build(HttpStatus.CONFLICT, "Data integrity violation", req);
+    }
+
+    @ExceptionHandler(jakarta.validation.ConstraintViolationException.class)
+    public ResponseEntity<ErrorResponse> handle(jakarta.validation.ConstraintViolationException ex, WebRequest req) {
+        return build(HttpStatus.BAD_REQUEST, ex.getMessage(), req);
+    }
+
+    @ExceptionHandler(org.springframework.http.converter.HttpMessageNotReadableException.class)
+    public ResponseEntity<ErrorResponse> handle(org.springframework.http.converter.HttpMessageNotReadableException ex, WebRequest req) {
+        return build(HttpStatus.BAD_REQUEST, "Malformed request body", req);
     }
 
     @ExceptionHandler(Exception.class)
