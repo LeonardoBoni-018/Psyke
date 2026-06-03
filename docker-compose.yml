@@ -39,6 +39,26 @@ services:
     volumes:
       - kafka-data:/var/lib/kafka/data
 
+  psyke-api:
+    build: .
+    container_name: psyke-api
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./src:/app/src
+      - ./pom.xml:/app/pom.xml
+    environment:
+      PSYKE_DB_URL: jdbc:postgresql://postgres-db:5432/psyke_master
+      PSYKE_DB_USER: postgres
+      PSYKE_DB_PASS: 123456
+      PSYKE_KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+      PSYKE_JWT_SECRET: dev-secret-que-deve-ter-256-bits-minimo-1234567890
+    depends_on:
+      postgres-db:
+        condition: service_healthy
+      kafka:
+        condition: service_started
+
 volumes:
   pgdata:
   kafka-data:

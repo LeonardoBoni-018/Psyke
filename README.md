@@ -95,18 +95,40 @@ services:
 
 ## Executar
 
+### Desenvolvimento (Docker — recomendado)
+
+```bash
+# Build da imagem (primeira vez ~5 min)
+docker compose build psyke-api
+
+# Subir tudo (DB + Kafka + API)
+docker compose up -d
+
+# Acompanhar logs da API
+docker compose logs -f psyke-api
+
+# Parar
+docker compose down
+```
+
+A API fica em `http://localhost:8080`. Com **DevTools**, alterações no código recompilam automaticamente (VS Code + Java Extension Pack compila ao salvar).
+
+### Local (sem Docker)
+
 ```bash
 # Subir dependências
-docker compose up -d
+docker compose up -d postgres-db kafka
 
 # Rodar testes
 .\mvnw.cmd test
 
-# Build
-.\mvnw.cmd clean package -DskipTests
-
 # Iniciar aplicação
 .\mvnw.cmd spring-boot:run
+```
+
+### Build
+```bash
+.\mvnw.cmd clean package -DskipTests
 ```
 
 ## Testes

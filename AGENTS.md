@@ -100,9 +100,23 @@ Transitions enforced by `AppointmentService.TRANSITIONS` map.
 ```
 .\mvnw.cmd test                          # Run all tests (199 tests)
 .\mvnw.cmd clean package -DskipTests     # Build JAR
-.\mvnw.cmd spring-boot:run               # Start app
+.\mvnw.cmd spring-boot:run               # Start app (local, without Docker)
 .\mvnw.cmd test -Dtest=UserServiceTest   # Single test class
+
+# Docker Dev
+docker compose up -d                     # Start full stack (DB + Kafka + API)
+docker compose up -d psyke-api           # Start only API (keep DB + Kafka running)
+docker compose logs -f psyke-api         # Follow API logs
+docker compose down                      # Stop everything
 ```
+
+## Docker Dev Workflow
+1. First build: `docker compose build psyke-api` (~5 min to download deps)
+2. Start: `docker compose up -d`
+3. API at `http://localhost:8080` — hot reload via DevTools (saved files recompile → restart)
+4. `docker compose down` to stop everything
+- DevTools watches `/app/src` (mounted from `./src`). Changes to any `.java` file trigger automatic restart when the IDE recompiles.
+- VS Code + Java Extension Pack compiles on save automatically.
 
 ## Test Credentials
 After creating a tenant and logging in:
