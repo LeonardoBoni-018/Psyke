@@ -1,6 +1,7 @@
 package com.br.psyke.psyke.config;
 
 import com.br.psyke.psyke.security.JwtAuthenticationFilter;
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
@@ -49,6 +50,12 @@ public class SecurityConfig {
                                  "/api/v3/api-docs/**", "/v3/api-docs/**").permitAll()
                 .requestMatchers("/api/error", "/error").permitAll()
                 .anyRequest().authenticated())
+            .exceptionHandling(e -> e
+                .authenticationEntryPoint((req, res, authEx) -> {
+                    res.setContentType("application/json;charset=UTF-8");
+                    res.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                    res.getWriter().write("{\"status\":401,\"error\":\"Unauthorized\",\"message\":\"Token expirado ou inválido\",\"path\":\"" + req.getRequestURI() + "\"}");
+                }))
             .addFilterBefore(filter, UsernamePasswordAuthenticationFilter.class)
             .build();
     }
