@@ -36,13 +36,18 @@ public class SecurityConfig {
             .cors(c -> c.configurationSource(corsConfigurationSource()))
             .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(a -> a
-                .requestMatchers("/auth/login", "/auth/refresh").permitAll()
-                .requestMatchers(HttpMethod.POST, "/tenants").permitAll()
-                .requestMatchers("/confirm/**", "/cancel/**").permitAll()
-                .requestMatchers("/actuator/health", "/actuator/info").permitAll()
-                .requestMatchers("/actuator/**").hasRole("ADMIN")
-                .requestMatchers("/swagger-ui.html", "/swagger-ui/**", "/v3/api-docs/**").permitAll()
-                .requestMatchers("/error").permitAll()
+                .requestMatchers("/api/auth/login", "/auth/login",
+                                 "/api/auth/refresh", "/auth/refresh").permitAll()
+                .requestMatchers(HttpMethod.POST, "/api/tenants", "/tenants").permitAll()
+                .requestMatchers("/api/confirm/**", "/confirm/**",
+                                 "/api/cancel/**", "/cancel/**").permitAll()
+                .requestMatchers("/api/actuator/health", "/actuator/health",
+                                 "/api/actuator/info", "/actuator/info").permitAll()
+                .requestMatchers("/api/actuator/**", "/actuator/**").hasRole("ADMIN")
+                .requestMatchers("/api/swagger-ui.html", "/swagger-ui.html",
+                                 "/api/swagger-ui/**", "/swagger-ui/**",
+                                 "/api/v3/api-docs/**", "/v3/api-docs/**").permitAll()
+                .requestMatchers("/api/error", "/error").permitAll()
                 .anyRequest().authenticated())
             .addFilterBefore(filter, UsernamePasswordAuthenticationFilter.class)
             .build();

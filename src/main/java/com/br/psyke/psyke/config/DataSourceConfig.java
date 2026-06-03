@@ -1,14 +1,18 @@
 package com.br.psyke.psyke.config;
 
+import com.br.psyke.psyke.repository.TenantRepository;
 import com.br.psyke.psyke.security.TenantAwareDataSource;
 import com.zaxxer.hikari.HikariDataSource;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Primary;
 import javax.sql.DataSource;
 
+@Slf4j
 @Configuration
 public class DataSourceConfig {
 
@@ -28,5 +32,21 @@ public class DataSourceConfig {
     @Bean @Primary
     public TenantAwareDataSource tenantAware(@Qualifier("master") DataSource master) {
         return new TenantAwareDataSource(master);
+    }
+
+    @Bean
+    public CommandLineRunner registerTenantDataSources(
+            TenantAwareDataSource ds, TenantRepository tenantRepo) {
+        return a -> {
+            var tenants = tenantRepo.findAll();
+            int count = 0;
+            for (var t : tenants) {
+                if (t.isActive()) {
+                    ds.addTenantDataSource(t.getId().toString(), t.getSchemaName(), url, user, pass);
+                    count++;
+                }
+            }
+            log.info("Registered {} active tenant data sources", count);
+        };
     }
 }
