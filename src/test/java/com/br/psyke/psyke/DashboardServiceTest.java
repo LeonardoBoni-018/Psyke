@@ -13,6 +13,7 @@ import java.util.List;
 import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -37,7 +38,7 @@ class DashboardServiceTest {
         when(professionals.countByClinicIdAndActiveTrue(clinicId)).thenReturn(3L);
         when(appointments.countByClinicIdAndStartTimeBetweenGroupByStatus(any(), any(), any()))
                 .thenReturn(List.of());
-        when(invoices.sumByClinicIdAndStatus(clinicId, Invoice.InvoiceStatus.PAID))
+        when(invoices.sumPaidBetween(eq(clinicId), any(), any()))
                 .thenReturn(new BigDecimal("5000.00"));
         when(invoices.sumByClinicIdAndStatus(clinicId, Invoice.InvoiceStatus.PENDING))
                 .thenReturn(new BigDecimal("1500.00"));

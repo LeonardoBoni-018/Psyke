@@ -60,7 +60,7 @@ class UserServiceTest {
                 .fullName("Maria").email("maria@test.com").active(true).emailVerified(false)
                 .roles(Set.of(rolePatient)).build();
 
-        when(users.existsByEmailAndTenantId(req.email(), tenantId)).thenReturn(false);
+        when(users.existsByEmailIgnoreCaseAndTenantId(req.email(), tenantId)).thenReturn(false);
         when(roles.findByName("ROLE_PATIENT")).thenReturn(Optional.of(rolePatient));
         when(users.save(any())).thenReturn(saved);
 
@@ -73,18 +73,18 @@ class UserServiceTest {
     void shouldThrowWhenEmailAlreadyExists() {
         var req = new CreateUserRequest("Joao", "joao@test.com", "password123", null, null, List.of("ROLE_PATIENT"));
 
-        when(users.existsByEmailAndTenantId(req.email(), tenantId)).thenReturn(true);
+        when(users.existsByEmailIgnoreCaseAndTenantId(req.email(), tenantId)).thenReturn(true);
 
         assertThatThrownBy(() -> service.create(req, tenantId))
                 .isInstanceOf(UserAlreadyExistsException.class)
-                .hasMessageContaining("already in use");
+                .hasMessageContaining("já cadastrado");
     }
 
     @Test
     void shouldThrowWhenRoleNotFound() {
         var req = new CreateUserRequest("Ana", "ana@test.com", "password123", null, null, List.of("ROLE_FAKE"));
 
-        when(users.existsByEmailAndTenantId(req.email(), tenantId)).thenReturn(false);
+        when(users.existsByEmailIgnoreCaseAndTenantId(req.email(), tenantId)).thenReturn(false);
         when(roles.findByName("ROLE_FAKE")).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> service.create(req, tenantId))
@@ -98,11 +98,11 @@ class UserServiceTest {
         var user = User.builder().id(userId).tenantId(tenantId).fullName("Carlos")
                 .email("carlos@test.com").active(true).roles(Set.of(rolePatient)).build();
 
-        when(users.findByIdWithRoles(userId)).thenReturn(Optional.of(user));
+        when(users.findByIdAndTenantId(userId, tenantId)).thenReturn(Optional.of(user));
         when(roles.findByName("ROLE_ADMIN")).thenReturn(Optional.of(roleAdmin));
         when(users.save(any())).thenAnswer(i -> i.getArgument(0));
 
-        var resp = service.updateRoles(userId, List.of("ROLE_ADMIN"));
+        var resp = service.updateRoles(userId, List.of("ROLE_ADMIN"), tenantId, UUID.randomUUID());
         assertThat(resp.roles()).containsExactly("ROLE_ADMIN");
     }
 
@@ -122,19 +122,19 @@ class UserServiceTest {
 
     @Test
     void shouldFindUserById() {
-        when(users.findByIdWithRoles(existingUser.getId()))
+        when(users.findByIdAndTenantId(existingUser.getId(), tenantId))
                 .thenReturn(Optional.of(existingUser));
 
-        var resp = service.findById(existingUser.getId());
+        var resp = service.findById(existingUser.getId(), tenantId);
         assertThat(resp.fullName()).isEqualTo("Carlos");
     }
 
     @Test
     void shouldThrowWhenUserNotFound() {
         var id = UUID.randomUUID();
-        when(users.findByIdWithRoles(id)).thenReturn(Optional.empty());
+        when(users.findByIdAndTenantId(id, tenantId)).thenReturn(Optional.empty());
 
-        assertThatThrownBy(() -> service.findById(id))
+        assertThatThrownBy(() -> service.findById(id, tenantId))
                 .isInstanceOf(ResourceNotFoundException.class);
     }
 
@@ -143,19 +143,19 @@ class UserServiceTest {
         var id = existingUser.getId();
         var req = new UpdateUserRequest("Carlos Updated", null, null, null);
 
-        when(users.findByIdWithRoles(id)).thenReturn(Optional.of(existingUser));
+        when(users.findByIdAndTenantId(id, tenantId)).thenReturn(Optional.of(existingUser));
         when(users.save(any())).thenAnswer(i -> i.getArgument(0));
 
-        var resp = service.update(id, req);
+        var resp = service.update(id, req, tenantId, UUID.randomUUID());
         assertThat(resp.fullName()).isEqualTo("Carlos Updated");
     }
 
     @Test
     void shouldDeactivateUser() {
         var id = existingUser.getId();
-        when(users.findByIdWithRoles(id)).thenReturn(Optional.of(existingUser));
+        when(users.findByIdAndTenantId(id, tenantId)).thenReturn(Optional.of(existingUser));
 
-        service.delete(id);
+        service.delete(id, tenantId, UUID.randomUUID());
         assertThat(existingUser.isActive()).isFalse();
         verify(users).save(existingUser);
     }
@@ -163,18 +163,18 @@ class UserServiceTest {
     @Test
     void shouldThrowOnUpdateWhenUserNotFound() {
         var id = UUID.randomUUID();
-        when(users.findByIdWithRoles(id)).thenReturn(Optional.empty());
+        when(users.findByIdAndTenantId(id, tenantId)).thenReturn(Optional.empty());
 
-        assertThatThrownBy(() -> service.update(id, new UpdateUserRequest(null, null, null, null)))
+        assertThatThrownBy(() -> service.update(id, new UpdateUserRequest(null, null, null, null), tenantId, UUID.randomUUID()))
                 .isInstanceOf(ResourceNotFoundException.class);
     }
 
     @Test
     void shouldThrowOnDeleteWhenUserNotFound() {
         var id = UUID.randomUUID();
-        when(users.findByIdWithRoles(id)).thenReturn(Optional.empty());
+        when(users.findByIdAndTenantId(id, tenantId)).thenReturn(Optional.empty());
 
-        assertThatThrownBy(() -> service.delete(id))
+        assertThatThrownBy(() -> service.delete(id, tenantId, UUID.randomUUID()))
                 .isInstanceOf(ResourceNotFoundException.class);
     }
 
@@ -183,11 +183,38 @@ class UserServiceTest {
         var id = existingUser.getId();
         var req = new UpdateUserRequest("Novo Nome", "99988877766", "+5511977776666", false);
 
-        when(users.findByIdWithRoles(id)).thenReturn(Optional.of(existingUser));
+        when(users.findByIdAndTenantId(id, tenantId)).thenReturn(Optional.of(existingUser));
         when(users.save(any())).thenAnswer(i -> i.getArgument(0));
 
-        var resp = service.update(id, req);
+        var resp = service.update(id, req, tenantId, UUID.randomUUID());
         assertThat(resp.fullName()).isEqualTo("Novo Nome");
         assertThat(resp.phone()).isEqualTo("+5511977776666");
+    }
+
+    @Test
+    void shouldNotFindUserFromAnotherTenant() {
+        var id = existingUser.getId();
+        var otherTenant = UUID.randomUUID();
+        when(users.findByIdAndTenantId(id, otherTenant)).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> service.findById(id, otherTenant))
+                .isInstanceOf(ResourceNotFoundException.class);
+    }
+
+    @Test
+    void shouldNotAllowAdminToRemoveOwnAdminRole() {
+        var id = existingUser.getId();
+        when(users.findByIdAndTenantId(id, tenantId)).thenReturn(Optional.of(existingUser));
+
+        assertThatThrownBy(() -> service.updateRoles(id, List.of("ROLE_PATIENT"), tenantId, id))
+                .isInstanceOf(IllegalArgumentException.class);
+    }
+
+    @Test
+    void shouldNotAllowUserToDeactivateThemselves() {
+        var id = existingUser.getId();
+        assertThatThrownBy(() -> service.delete(id, tenantId, id))
+                .isInstanceOf(IllegalArgumentException.class);
+        verify(users, never()).save(any());
     }
 }

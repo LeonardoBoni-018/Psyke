@@ -9,7 +9,11 @@ public record TokenResponse(
     long expiresIn,
     String userId,
     String name,
-    List<String> roles
+    List<String> roles,
+    String email,
+    String tenantId,
+    String tenantName,
+    String tenantSlug
 ) {
     public TokenResponse {
         if (tokenType == null) tokenType = "Bearer";

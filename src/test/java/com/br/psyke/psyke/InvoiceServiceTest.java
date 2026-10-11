@@ -22,19 +22,22 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class InvoiceServiceTest {
 
     @Mock private InvoiceRepository invoices;
+    @Mock private com.br.psyke.psyke.repository.PatientRepository patients;
+    @Mock private com.br.psyke.psyke.repository.ProfessionalRepository professionals;
     private InvoiceService service;
     private UUID clinicId;
     private Invoice existingInvoice;
 
     @BeforeEach
     void setUp() {
-        service = new InvoiceService(invoices);
+        service = new InvoiceService(invoices, patients, professionals);
         clinicId = UUID.randomUUID();
         existingInvoice = Invoice.builder()
                 .id(UUID.randomUUID()).clinicId(clinicId)
@@ -52,6 +55,8 @@ class InvoiceServiceTest {
                 .amount(req.amount()).paymentMethod("credit_card")
                 .status(Invoice.InvoiceStatus.PENDING).notes("Session payment").build();
 
+        when(patients.findByIdAndClinicId(req.patientId(), clinicId))
+                .thenReturn(Optional.of(com.br.psyke.psyke.model.Patient.builder().id(req.patientId()).clinicId(clinicId).build()));
         when(invoices.save(any())).thenReturn(saved);
 
         var resp = service.create(req, clinicId);
@@ -82,7 +87,7 @@ class InvoiceServiceTest {
         var pageable = PageRequest.of(0, 10);
         var page = new PageImpl<>(List.of(existingInvoice));
 
-        when(invoices.findByClinicId(clinicId, pageable)).thenReturn(page);
+        when(invoices.findByClinicId(eq(clinicId), any(org.springframework.data.domain.Pageable.class))).thenReturn(page);
 
         var resp = service.findAll(clinicId, null, null, pageable);
         assertThat(resp).hasSize(1);
@@ -95,7 +100,7 @@ class InvoiceServiceTest {
         var pageable = PageRequest.of(0, 10);
         var page = new PageImpl<>(List.of(existingInvoice));
 
-        when(invoices.findByClinicIdAndPatientId(clinicId, patientId, pageable)).thenReturn(page);
+        when(invoices.findByClinicIdAndPatientId(eq(clinicId), eq(patientId), any(org.springframework.data.domain.Pageable.class))).thenReturn(page);
 
         var resp = service.findAll(clinicId, patientId, null, pageable);
         assertThat(resp).hasSize(1);

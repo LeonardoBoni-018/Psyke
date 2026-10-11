@@ -27,9 +27,12 @@ public class PatientController {
 
     @GetMapping
     @Operation(summary = "List patients with pagination")
-    public ResponseEntity<Page<PatientResponse>> findAll(Pageable pageable) {
-        return ResponseEntity.ok(service.findAll(
-                UUID.fromString(TenantContext.getClinicId()), pageable));
+    public ResponseEntity<Page<PatientResponse>> findAll(
+            @RequestParam(required = false) String q,
+            @RequestParam(required = false) String status,
+            Pageable pageable) {
+        if (q != null && q.length() > 100) throw new IllegalArgumentException("Busca muito longa");
+        return ResponseEntity.ok(service.search(UUID.fromString(TenantContext.getClinicId()), q, status, pageable));
     }
 
     @GetMapping("/{id}")

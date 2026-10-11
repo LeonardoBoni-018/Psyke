@@ -41,6 +41,7 @@ class AppointmentFlowIntegrationTest {
     private String adminToken;
     private UUID adminId;
     private UUID patientId;
+    private UUID professionalId;
     private UUID tenantId;
     private String tenantIdStr;
 
@@ -74,25 +75,31 @@ class AppointmentFlowIntegrationTest {
     void setUp() {
         var slug = "it" + UUID.randomUUID().toString().substring(0, 6);
         var tenantRes = rest.postForEntity("/tenants",
-            new CreateTenantRequest("IT", slug, "BASIC", "admin@it.com", "S3cret", "Admin", 1, 10),
+            new CreateTenantRequest("IT", slug, "BASIC", "admin@it.com", "S3cret-Pass1", "Admin", 1, 10),
             TenantResponse.class);
         assertThat(tenantRes.getStatusCode()).isEqualTo(HttpStatus.CREATED);
         tenantIdStr = tenantRes.getBody().id();
         tenantId = UUID.fromString(tenantIdStr);
 
         var loginRes = rest.postForEntity("/auth/login",
-            new LoginRequest("admin@it.com", "S3cret", tenantIdStr),
+            new LoginRequest("admin@it.com", "S3cret-Pass1", tenantIdStr),
             TokenResponse.class);
         assertThat(loginRes.getStatusCode()).isEqualTo(HttpStatus.OK);
         adminToken = loginRes.getBody().accessToken();
         adminId = UUID.fromString(loginRes.getBody().userId());
 
-        var         role = roleRepo.findByName("ROLE_USER").orElseGet(() ->
-            roleRepo.save(Role.builder().name("ROLE_USER").description("User").build()));
-        patientId = userRepo.save(User.builder()
-            .tenantId(tenantId).fullName("Patient").email("patient@it.com")
-            .passwordHash("dummy").active(true).emailVerified(true)
-            .roles(Set.of(role)).build()).getId();
+        // Appointments reference clinic patients/professionals (tenant schema), not login users.
+        var profRes = rest.exchange(RequestEntity.post("/professionals").headers(authHeader())
+                .body(new CreateProfessionalRequest("06/12345", "Dra. Integração", "Clínica", "TCC", null,
+                        new java.math.BigDecimal("200.00"), 50, false)), ProfessionalResponse.class);
+        assertThat(profRes.getStatusCode()).isEqualTo(HttpStatus.CREATED);
+        professionalId = UUID.fromString(profRes.getBody().id());
+
+        var patientRes = rest.exchange(RequestEntity.post("/patients").headers(authHeader())
+                .body(new CreatePatientRequest("Paciente Integração", null, null, null, null, null,
+                        null, "paciente@it.com", null, null, null)), PatientResponse.class);
+        assertThat(patientRes.getStatusCode()).isEqualTo(HttpStatus.CREATED);
+        patientId = UUID.fromString(patientRes.getBody().id());
 
         when(appointmentKafkaTemplate.send(anyString(), any(), any())).thenReturn(CompletableFuture.completedFuture(null));
         when(sessionKafkaTemplate.send(anyString(), any(), any())).thenReturn(CompletableFuture.completedFuture(null));
@@ -113,14 +120,14 @@ class AppointmentFlowIntegrationTest {
     @Test
     void shouldDebugCreateAppointment() {
         var date = nextMonday();
-        createAvailability(adminId, date, LocalTime.of(8, 0), LocalTime.of(12, 0), 50);
+        createAvailability(professionalId, date, LocalTime.of(8, 0), LocalTime.of(12, 0), 50);
         var slotStart = LocalDateTime.of(date, LocalTime.of(8, 0));
         var slotEnd = slotStart.plusMinutes(50);
 
         var res = rest.exchange(
             RequestEntity.post("/appointments")
                 .headers(authHeader())
-                .body(new AppointmentRequest(patientId, adminId, null, slotStart, slotEnd, "Debug")),
+                .body(new AppointmentRequest(patientId, professionalId, null, slotStart, slotEnd, "Debug")),
             String.class);
         System.out.println("STATUS: " + res.getStatusCode());
         System.out.println("BODY: " + res.getBody());
@@ -130,14 +137,14 @@ class AppointmentFlowIntegrationTest {
     @Test
     void shouldCompleteFullAppointmentLifecycle() {
         var date = nextMonday();
-        createAvailability(adminId, date, LocalTime.of(8, 0), LocalTime.of(12, 0), 50);
+        createAvailability(professionalId, date, LocalTime.of(8, 0), LocalTime.of(12, 0), 50);
         var slotStart = LocalDateTime.of(date, LocalTime.of(8, 0));
         var slotEnd = slotStart.plusMinutes(50);
 
         var aptRes = rest.exchange(
             RequestEntity.post("/appointments")
                 .headers(authHeader())
-                .body(new AppointmentRequest(patientId, adminId, null, slotStart, slotEnd, "Integration test")),
+                .body(new AppointmentRequest(patientId, professionalId, null, slotStart, slotEnd, "Integration test")),
             AppointmentResponse.class);
         assertThat(aptRes.getStatusCode()).isEqualTo(HttpStatus.CREATED);
         assertThat(aptRes.getBody().status()).isEqualTo("SCHEDULED");
@@ -160,7 +167,7 @@ class AppointmentFlowIntegrationTest {
 
         var listRes = rest.exchange(
             RequestEntity.get("/appointments?professionalId={p}&from={f}&to={t}",
-                adminId, date.atStartOfDay(), date.plusDays(1).atStartOfDay())
+                professionalId, date.atStartOfDay(), date.plusDays(1).atStartOfDay())
                 .headers(authHeader()).build(),
             new ParameterizedTypeReference<List<AppointmentResponse>>() {});
         assertThat(listRes.getBody()).hasSize(1);
@@ -180,14 +187,14 @@ class AppointmentFlowIntegrationTest {
     @Test
     void shouldRejectInvalidStatusTransition() {
         var date = nextMonday();
-        createAvailability(adminId, date, LocalTime.of(8, 0), LocalTime.of(12, 0), 50);
+        createAvailability(professionalId, date, LocalTime.of(8, 0), LocalTime.of(12, 0), 50);
         var slotStart = LocalDateTime.of(date, LocalTime.of(8, 0));
         var slotEnd = slotStart.plusMinutes(50);
 
         var aptRes = rest.exchange(
             RequestEntity.post("/appointments")
                 .headers(authHeader())
-                .body(new AppointmentRequest(patientId, adminId, null, slotStart, slotEnd, "State test")),
+                .body(new AppointmentRequest(patientId, professionalId, null, slotStart, slotEnd, "State test")),
             AppointmentResponse.class);
         assertThat(aptRes.getStatusCode()).isEqualTo(HttpStatus.CREATED);
         var aptId = aptRes.getBody().id();
@@ -203,14 +210,14 @@ class AppointmentFlowIntegrationTest {
     @Test
     void shouldHandleCancellationAndWaitingList() {
         var date = nextMonday();
-        createAvailability(adminId, date, LocalTime.of(8, 0), LocalTime.of(12, 0), 50);
+        createAvailability(professionalId, date, LocalTime.of(8, 0), LocalTime.of(12, 0), 50);
         var slotStart = LocalDateTime.of(date, LocalTime.of(8, 0));
         var slotEnd = slotStart.plusMinutes(50);
 
         var aptRes = rest.exchange(
             RequestEntity.post("/appointments")
                 .headers(authHeader())
-                .body(new AppointmentRequest(patientId, adminId, null, slotStart, slotEnd, "Cancel test")),
+                .body(new AppointmentRequest(patientId, professionalId, null, slotStart, slotEnd, "Cancel test")),
             AppointmentResponse.class);
         var aptId = aptRes.getBody().id();
 
@@ -224,13 +231,13 @@ class AppointmentFlowIntegrationTest {
         var wlRes = rest.exchange(
             RequestEntity.post("/waiting-list")
                 .headers(authHeader())
-                .body(new WaitingListRequest(patientId, adminId, 1)),
+                .body(new WaitingListRequest(patientId, professionalId, 1)),
             WaitingListResponse.class);
         assertThat(wlRes.getStatusCode()).isEqualTo(HttpStatus.CREATED);
         assertThat(wlRes.getBody().status()).isEqualTo("WAITING");
 
         var listWl = rest.exchange(
-            RequestEntity.get("/waiting-list?professionalId={p}", adminId)
+            RequestEntity.get("/waiting-list?professionalId={p}", professionalId)
                 .headers(authHeader()).build(),
             new ParameterizedTypeReference<java.util.Map<String, Object>>() {});
         assertThat(listWl.getBody()).isNotNull();

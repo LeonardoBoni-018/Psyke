@@ -5,11 +5,14 @@ import com.br.psyke.psyke.event.SessionEventProducer;
 import com.br.psyke.psyke.exception.InvalidTransitionException;
 import com.br.psyke.psyke.exception.ResourceNotFoundException;
 import com.br.psyke.psyke.model.Appointment;
+import com.br.psyke.psyke.model.Patient;
+import com.br.psyke.psyke.model.Professional;
 import com.br.psyke.psyke.model.Slot;
 import com.br.psyke.psyke.repository.AppointmentRepository;
 import com.br.psyke.psyke.repository.RoomRepository;
 import com.br.psyke.psyke.repository.SlotRepository;
-import com.br.psyke.psyke.repository.UserRepository;
+import com.br.psyke.psyke.repository.ProfessionalRepository;
+import com.br.psyke.psyke.repository.PatientRepository;
 import com.br.psyke.psyke.service.AppointmentService;
 import com.br.psyke.psyke.service.CancellationLogService;
 import com.br.psyke.psyke.service.SlotEngine;
@@ -31,7 +34,8 @@ class AppointmentDeletionTest {
 
     @Mock private AppointmentRepository appointmentRepo;
     @Mock private SlotRepository slotRepo;
-    @Mock private UserRepository userRepo;
+    @Mock private ProfessionalRepository professionalRepo;
+    @Mock private PatientRepository patientRepo;
     @Mock private RoomRepository roomRepo;
     @Mock private AppointmentEventProducer eventProducer;
     @Mock private SessionEventProducer sessionEventProducer;
@@ -45,7 +49,7 @@ class AppointmentDeletionTest {
 
     @BeforeEach
     void setUp() {
-        service = new AppointmentService(appointmentRepo, slotRepo, userRepo, roomRepo,
+        service = new AppointmentService(appointmentRepo, slotRepo, professionalRepo, patientRepo, roomRepo,
                 eventProducer, sessionEventProducer, cancellationLogService, slotEngine);
         appointmentId = UUID.randomUUID();
         var now = LocalDateTime.now().plusDays(1);

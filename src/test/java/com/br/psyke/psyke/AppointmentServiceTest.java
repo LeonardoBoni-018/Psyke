@@ -8,12 +8,15 @@ import com.br.psyke.psyke.exception.InvalidTransitionException;
 import com.br.psyke.psyke.exception.ResourceNotFoundException;
 import com.br.psyke.psyke.exception.SlotConflictException;
 import com.br.psyke.psyke.model.Appointment;
+import com.br.psyke.psyke.model.Patient;
+import com.br.psyke.psyke.model.Professional;
 import com.br.psyke.psyke.model.Room;
 import com.br.psyke.psyke.model.User;
 import com.br.psyke.psyke.repository.AppointmentRepository;
 import com.br.psyke.psyke.repository.RoomRepository;
 import com.br.psyke.psyke.repository.SlotRepository;
-import com.br.psyke.psyke.repository.UserRepository;
+import com.br.psyke.psyke.repository.ProfessionalRepository;
+import com.br.psyke.psyke.repository.PatientRepository;
 import com.br.psyke.psyke.service.AppointmentService;
 import com.br.psyke.psyke.service.CancellationLogService;
 import com.br.psyke.psyke.service.SlotEngine;
@@ -36,7 +39,8 @@ class AppointmentServiceTest {
 
     @Mock private AppointmentRepository appointmentRepo;
     @Mock private SlotRepository slotRepo;
-    @Mock private UserRepository userRepo;
+    @Mock private ProfessionalRepository professionalRepo;
+    @Mock private PatientRepository patientRepo;
     @Mock private RoomRepository roomRepo;
     @Mock private AppointmentEventProducer eventProducer;
     @Mock private SessionEventProducer sessionEventProducer;
@@ -44,19 +48,17 @@ class AppointmentServiceTest {
     @Mock private SlotEngine slotEngine;
     private AppointmentService service;
     private Appointment existingAppointment;
-    private User professional;
-    private User patient;
+    private Professional professional;
+    private Patient patient;
     private Room room;
 
     @BeforeEach
     void setUp() {
-        service = new AppointmentService(appointmentRepo, slotRepo, userRepo, roomRepo,
+        service = new AppointmentService(appointmentRepo, slotRepo, professionalRepo, patientRepo, roomRepo,
                 eventProducer, sessionEventProducer, cancellationLogService, slotEngine);
         var clinicId = UUID.randomUUID();
-        professional = User.builder().id(UUID.randomUUID()).clinicId(clinicId)
-                .fullName("Dr. Ana").email("ana@test.com").active(true).build();
-        patient = User.builder().id(UUID.randomUUID()).clinicId(clinicId)
-                .fullName("João").email("joao@test.com").active(true).build();
+        professional = Professional.builder().id(UUID.randomUUID()).clinicId(clinicId).fullName("Dr. Ana").crp("06/00001").sessionDuration(50).active(true).build();
+        patient = Patient.builder().id(UUID.randomUUID()).clinicId(clinicId).fullName("João").build();
         room = Room.builder().id(UUID.randomUUID()).name("Sala 01").active(true).build();
         existingAppointment = Appointment.builder()
                 .id(UUID.randomUUID()).clinicId(clinicId).patientId(patient.getId())
@@ -143,7 +145,7 @@ class AppointmentServiceTest {
         when(appointmentRepo.findAllByFilters(any(), any(), any(), any(), any()))
                 .thenReturn(List.of(existingAppointment));
 
-        var resp = service.findAll(null, null, null, null, null);
+        var resp = service.findAll(null, null, null, LocalDateTime.of(2026, 6, 1, 0, 0), LocalDateTime.of(2026, 6, 30, 0, 0));
         assertThat(resp).hasSize(1);
         assertThat(resp.get(0).status()).isEqualTo("SCHEDULED");
     }

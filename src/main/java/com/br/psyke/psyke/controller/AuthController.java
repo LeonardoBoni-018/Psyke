@@ -1,13 +1,17 @@
 package com.br.psyke.psyke.controller;
 
 import com.br.psyke.psyke.dto.*;
+import com.br.psyke.psyke.exception.InvalidCredentialsException;
+import com.br.psyke.psyke.security.LoginAttemptLimiter;
 import com.br.psyke.psyke.service.AuthService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
 import java.util.UUID;
 
 @RestController
@@ -16,10 +20,22 @@ import java.util.UUID;
 public class AuthController {
 
     private final AuthService svc;
+    private final LoginAttemptLimiter loginLimiter;
 
     @PostMapping("/login")
     public ResponseEntity<TokenResponse> login(@Valid @RequestBody LoginRequest r, HttpServletRequest h) {
-        return ResponseEntity.ok(svc.login(r, h.getRemoteAddr(), h.getHeader("User-Agent")));
+        var wait = loginLimiter.retryAfterSeconds(r.tenantId(), r.email());
+        if (wait > 0)
+            throw new ResponseStatusException(HttpStatus.TOO_MANY_REQUESTS,
+                    "Muitas tentativas para esta conta. Aguarde " + (wait + 59) / 60 + " minuto(s) e tente novamente.");
+        try {
+            var tokens = svc.login(r, h.getRemoteAddr(), h.getHeader("User-Agent"));
+            loginLimiter.recordSuccess(r.tenantId(), r.email());
+            return ResponseEntity.ok(tokens);
+        } catch (InvalidCredentialsException e) {
+            loginLimiter.recordFailure(r.tenantId(), r.email());
+            throw e;
+        }
     }
 
     @PostMapping("/refresh")

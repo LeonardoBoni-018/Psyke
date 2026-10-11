@@ -26,22 +26,20 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     protected void doFilterInternal(@NonNull HttpServletRequest req, @NonNull HttpServletResponse res,
             @NonNull FilterChain chain) throws ServletException, IOException {
         try {
+            MDC.put("requestId", UUID.randomUUID().toString().substring(0, 8));
             var token = extract(req);
-            if (token != null && jwt.isValid(token)) {
-                var tenantId = jwt.tenantId(token);
-                var userId   = jwt.userId(token).toString();
+            if (token != null) {
+                jwt.parseAccessToken(token).ifPresent(at -> {
+                    TenantContext.setTenantId(at.tenantId());
+                    TenantContext.setClinicId(at.clinicId());
+                    MDC.put("tenantId", at.tenantId());
+                    MDC.put("userId", at.userId().toString());
 
-                TenantContext.setTenantId(tenantId);
-                TenantContext.setClinicId(jwt.clinicId(token));
-
-                MDC.put("tenantId",  tenantId);
-                MDC.put("userId",    userId);
-                MDC.put("requestId", UUID.randomUUID().toString().substring(0, 8));
-
-                var auth = new UsernamePasswordAuthenticationToken(
-                        jwt.userId(token), null,
-                        jwt.roles(token).stream().map(SimpleGrantedAuthority::new).toList());
-                SecurityContextHolder.getContext().setAuthentication(auth);
+                    var auth = new UsernamePasswordAuthenticationToken(
+                            at.userId(), null,
+                            at.roles().stream().map(SimpleGrantedAuthority::new).toList());
+                    SecurityContextHolder.getContext().setAuthentication(auth);
+                });
             }
             chain.doFilter(req, res);
         } finally {

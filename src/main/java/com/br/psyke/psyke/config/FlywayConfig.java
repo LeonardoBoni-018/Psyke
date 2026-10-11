@@ -8,6 +8,7 @@ import org.flywaydb.core.Flyway;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.annotation.Order;
 import javax.sql.DataSource;
 
 @Slf4j
@@ -18,6 +19,7 @@ public class FlywayConfig {
     private DataSource master;
 
     @Bean
+    @Order(1)
     public CommandLineRunner migrate(TenantRepository tenantRepo) {
         return a -> {
             var masterFlyway = Flyway.configure().dataSource(master).schemas("public")

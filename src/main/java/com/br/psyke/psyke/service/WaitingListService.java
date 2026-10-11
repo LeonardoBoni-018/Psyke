@@ -8,7 +8,7 @@ import com.br.psyke.psyke.exception.ResourceNotFoundException;
 import com.br.psyke.psyke.exception.SlotConflictException;
 import com.br.psyke.psyke.model.WaitingList;
 import com.br.psyke.psyke.repository.SlotRepository;
-import com.br.psyke.psyke.repository.UserRepository;
+import com.br.psyke.psyke.repository.PatientRepository;
 import com.br.psyke.psyke.repository.WaitingListRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -27,13 +27,13 @@ import java.util.UUID;
 public class WaitingListService {
 
     private final WaitingListRepository repo;
-    private final UserRepository userRepo;
+    private final PatientRepository patientRepo;
     private final SlotRepository slotRepo;
     private final AppointmentEventProducer eventProducer;
 
     @Transactional
     public WaitingListResponse join(WaitingListRequest req) {
-        userRepo.findById(req.patientId())
+        patientRepo.findById(req.patientId())
                 .orElseThrow(() -> new ResourceNotFoundException("Patient not found"));
 
         var existing = repo.findByPatientIdAndProfessionalIdAndStatus(

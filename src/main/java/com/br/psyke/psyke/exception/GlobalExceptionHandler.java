@@ -4,7 +4,6 @@ import com.br.psyke.psyke.dto.ErrorResponse;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
-import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -70,7 +69,8 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<ErrorResponse> handle(MethodArgumentNotValidException ex, WebRequest req) {
-        var details = ex.getBindingResult().getFieldErrors().stream().map(FieldError::getDefaultMessage).toList();
+        var details = ex.getBindingResult().getFieldErrors().stream()
+            .map(f -> f.getField() + ": " + f.getDefaultMessage()).toList();
         return ResponseEntity.badRequest().body(new ErrorResponse(400, "Validation Error",
             "Invalid request", req.getDescription(false).replace("uri=", ""), OffsetDateTime.now(), details));
     }
@@ -103,12 +103,40 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(jakarta.validation.ConstraintViolationException.class)
     public ResponseEntity<ErrorResponse> handle(jakarta.validation.ConstraintViolationException ex, WebRequest req) {
-        return build(HttpStatus.BAD_REQUEST, ex.getMessage(), req);
+        return build(HttpStatus.BAD_REQUEST, "Invalid request parameters", req);
     }
 
     @ExceptionHandler(org.springframework.http.converter.HttpMessageNotReadableException.class)
     public ResponseEntity<ErrorResponse> handle(org.springframework.http.converter.HttpMessageNotReadableException ex, WebRequest req) {
         return build(HttpStatus.BAD_REQUEST, "Malformed request body", req);
+    }
+
+    @ExceptionHandler(IllegalArgumentException.class)
+    public ResponseEntity<ErrorResponse> handle(IllegalArgumentException ex, WebRequest req) {
+        var msg = ex.getMessage();
+        if (msg == null || msg.startsWith("No enum constant") || msg.contains("UUID")) msg = "Valor inválido na requisição";
+        return build(HttpStatus.BAD_REQUEST, msg, req);
+    }
+
+    @ExceptionHandler(org.springframework.web.servlet.resource.NoResourceFoundException.class)
+    public ResponseEntity<ErrorResponse> handle(org.springframework.web.servlet.resource.NoResourceFoundException ex, WebRequest req) {
+        return build(HttpStatus.NOT_FOUND, "Resource not found", req);
+    }
+
+    @ExceptionHandler(org.springframework.web.multipart.MaxUploadSizeExceededException.class)
+    public ResponseEntity<ErrorResponse> handle(org.springframework.web.multipart.MaxUploadSizeExceededException ex, WebRequest req) {
+        return build(HttpStatus.CONTENT_TOO_LARGE, "Arquivo excede o tamanho máximo permitido", req);
+    }
+
+    @ExceptionHandler(org.springframework.web.server.ResponseStatusException.class)
+    public ResponseEntity<ErrorResponse> handle(org.springframework.web.server.ResponseStatusException ex, WebRequest req) {
+        var status = HttpStatus.valueOf(ex.getStatusCode().value());
+        return build(status, ex.getReason() != null ? ex.getReason() : status.getReasonPhrase(), req);
+    }
+
+    @ExceptionHandler(org.springframework.web.method.annotation.HandlerMethodValidationException.class)
+    public ResponseEntity<ErrorResponse> handle(org.springframework.web.method.annotation.HandlerMethodValidationException ex, WebRequest req) {
+        return build(HttpStatus.BAD_REQUEST, "Invalid request parameters", req);
     }
 
     @ExceptionHandler(Exception.class)

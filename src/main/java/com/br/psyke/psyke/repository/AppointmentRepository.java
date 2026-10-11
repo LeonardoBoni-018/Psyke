@@ -42,6 +42,21 @@ public interface AppointmentRepository extends JpaRepository<Appointment, UUID> 
         @Param("from") LocalDateTime from,
         @Param("to") LocalDateTime to);
 
+    /** Rows of [professionalId, count] of completed sessions in [from, to). */
+    @Query("SELECT a.professionalId, COUNT(a) FROM Appointment a WHERE a.clinicId = :clinicId AND a.status = 'DONE' " +
+           "AND a.startTime >= :from AND a.startTime < :to GROUP BY a.professionalId ORDER BY COUNT(a) DESC")
+    List<Object[]> countDoneByProfessional(
+        @Param("clinicId") UUID clinicId,
+        @Param("from") LocalDateTime from,
+        @Param("to") LocalDateTime to);
+
+    @Query("SELECT a FROM Appointment a WHERE a.clinicId = :clinicId AND a.startTime >= :from AND a.startTime < :to " +
+           "ORDER BY a.startTime")
+    List<Appointment> findForExport(
+        @Param("clinicId") UUID clinicId,
+        @Param("from") LocalDateTime from,
+        @Param("to") LocalDateTime to);
+
     long countByProfessionalIdAndStartTimeBetweenAndStatusIn(
         UUID professionalId, LocalDateTime from, LocalDateTime to, List<Appointment.AppointmentStatus> statuses);
 

@@ -25,6 +25,7 @@ public class Questionnaire {
     private String description;
 
     @Column(columnDefinition = "jsonb")
+    @org.hibernate.annotations.JdbcTypeCode(org.hibernate.type.SqlTypes.JSON)
     @Builder.Default
     private String questions = "[]";
 

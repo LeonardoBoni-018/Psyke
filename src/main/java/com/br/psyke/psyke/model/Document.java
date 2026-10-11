@@ -32,7 +32,7 @@ public class Document {
     @Column(name = "original_name", nullable = false, length = 500)
     private String originalName;
 
-    @Column(name = "storage_path", nullable = false, length = 1000)
+    @Column(name = "storage_path", length = 1000)
     private String storagePath;
 
     @Column(name = "file_type", length = 100)

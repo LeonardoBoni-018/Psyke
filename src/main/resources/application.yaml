@@ -1,6 +1,35 @@
+server:
+  port: ${PORT:8080}
+  compression:
+    enabled: true
+    mime-types: application/json,text/csv,text/plain
+    min-response-size: 1024
+  error:
+    include-stacktrace: never
+    include-message: never
+  tomcat:
+    max-swallow-size: 12MB
+    connection-timeout: 20s
+
 spring:
   application:
     name: psyke
+
+  autoconfigure:
+    # JWT-only API: no in-memory user / generated password.
+    exclude: org.springframework.boot.security.autoconfigure.UserDetailsServiceAutoConfiguration
+
+  threads:
+    virtual:
+      enabled: false
+
+  task:
+    execution:
+      thread-name-prefix: psyke-async-
+      pool:
+        core-size: 2
+        max-size: 8
+        queue-capacity: 500
 
   kafka:
     bootstrap-servers: ${PSYKE_KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
@@ -10,14 +39,15 @@ spring:
       properties:
         spring.json.type.mapping: "appointment-event:com.br.psyke.psyke.event.AppointmentEvent,session-event:com.br.psyke.psyke.event.SessionEvent"
     consumer:
-      group-id: psyke-waiting-list
+      group-id: psyke
       key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
       value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
       properties:
         spring.json.type.mapping: "appointment-event:com.br.psyke.psyke.event.AppointmentEvent,session-event:com.br.psyke.psyke.event.SessionEvent"
-        spring.json.trusted.packages: "*"
+        spring.json.trusted.packages: "com.br.psyke.psyke.event"
 
   datasource:
+    # Accepts jdbc:postgresql://... or postgres://user:pass@host/db?sslmode=require (Neon/Render).
     url: ${PSYKE_DB_URL:jdbc:postgresql://localhost:5432/psyke_master}
     username: ${PSYKE_DB_USER:postgres}
     password: ${PSYKE_DB_PASS:postgres}
@@ -29,10 +59,23 @@ spring:
     defer-datasource-initialization: true
     properties:
       hibernate:
-        dialect: org.hibernate.dialect.PostgreSQLDialect
         jdbc:
+          batch_size: 50
           lob:
             non_contextual_creation: true
+        order_inserts: true
+        order_updates: true
+
+  data:
+    web:
+      pageable:
+        max-page-size: 100
+        default-page-size: 20
+
+  servlet:
+    multipart:
+      max-file-size: 10MB
+      max-request-size: 11MB
 
   mail:
     host: ${PSYKE_MAIL_HOST:}
@@ -45,19 +88,31 @@ spring:
           auth: true
           starttls:
             enable: true
+          connectiontimeout: 5000
+          timeout: 5000
+          writetimeout: 5000
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      probes:
+        enabled: true
+      show-details: never
+  health:
+    mail:
+      enabled: false
 
 logging:
   level:
-    com.br.psyke.psyke: DEBUG
-    org.springframework.web: INFO
-  file:
-    name: logs/psyke.log
-  logback:
-    rollingpolicy:
-      max-history: 7
-      max-file-size: 10MB
+    root: INFO
+    com.br.psyke.psyke: ${PSYKE_LOG_LEVEL:INFO}
+    org.apache.kafka: WARN
   pattern:
-    console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] [tenant:%X{tenantId}] %-5level %logger{36} - %msg%n"
+    console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] [tenant:%X{tenantId}] [req:%X{requestId}] %-5level %logger{36} - %msg%n"
 
 twilio:
   account-sid: ${TWILIO_ACCOUNT_SID:}
@@ -66,23 +121,43 @@ twilio:
 
 app:
   base-url: ${PSYKE_BASE_URL:http://localhost:8080}
+  frontend-url: ${PSYKE_FRONTEND_URL:http://localhost:5173}
   jwt:
     secret: ${PSYKE_JWT_SECRET:CHANGE_ME_CHANGE_ME_CHANGE_ME_CHANGE_ME_CHANGE_ME_CHANGE_ME_CHANGE_ME}
     expiration-ms: ${PSYKE_JWT_EXPIRATION_MS:900000}
     refresh-expiration-ms: ${PSYKE_JWT_REFRESH_EXPIRATION_MS:604800000}
+    enforce-strong-secret: false
   cors:
-    allowed-origins: ${PSYKE_CORS_ORIGINS:http://localhost:5173,http://localhost:3000}
+    # Comma separated; patterns allowed, e.g. https://psyke-web.vercel.app,https://psyke-web-*.vercel.app
+    allowed-origins: ${PSYKE_CORS_ORIGINS:http://localhost:5173,http://localhost:4173,http://localhost:3000}
   mail:
     from: ${PSYKE_MAIL_FROM:noreply@psyke.com}
   upload:
     path: ${PSYKE_UPLOAD_PATH:${java.io.tmpdir}/psyke-uploads}
 
 psyke:
+  db:
+    pool-size: ${PSYKE_DB_POOL_SIZE:10}
+    min-idle: ${PSYKE_DB_MIN_IDLE:2}
+  messaging:
+    kafka:
+      enabled: ${PSYKE_KAFKA_ENABLED:false}
+  rate-limit:
+    enabled: ${PSYKE_RATE_LIMIT_ENABLED:true}
+    window-seconds: 60
+    login-per-window: 10
+    sensitive-per-window: 5
   ai:
     enabled: ${PSYKE_AI_ENABLED:false}
     api-key: ${PSYKE_AI_API_KEY:}
     model: ${PSYKE_AI_MODEL:gpt-4o-mini}
     api-url: ${PSYKE_AI_API_URL:https://api.openai.com/v1}
+
+springdoc:
+  api-docs:
+    enabled: ${PSYKE_API_DOCS_ENABLED:true}
+  swagger-ui:
+    enabled: ${PSYKE_API_DOCS_ENABLED:true}
 
 ---
 spring:
@@ -91,6 +166,17 @@ spring:
       on-profile: prod
   jpa:
     show-sql: false
-  logging:
-    level:
-      com.br.psyke.psyke: INFO
+
+server:
+  # Render/Fly/Railway terminate TLS in a proxy: trust X-Forwarded-* so client IPs and https are right.
+  forward-headers-strategy: framework
+
+app:
+  jwt:
+    enforce-strong-secret: true
+
+springdoc:
+  api-docs:
+    enabled: ${PSYKE_API_DOCS_ENABLED:false}
+  swagger-ui:
+    enabled: ${PSYKE_API_DOCS_ENABLED:false}

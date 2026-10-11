@@ -16,5 +16,16 @@ public record AppointmentResponse(
     @Schema(example = "Patient reported anxiety") String prontuario,
     @Schema(example = "Initial consultation") String notes,
     @Schema(example = "2026-05-28T08:00:00") String createdAt,
-    @Schema(example = "2026-05-28T08:00:00") String updatedAt
-) {}
+    @Schema(example = "2026-05-28T08:00:00") String updatedAt,
+    @Schema(description = "Patient display name") String patientName,
+    @Schema(description = "Professional display name") String professionalName,
+    @Schema(description = "Room display name") String roomName
+) {
+    /** Response without display names (list/detail endpoints fill them in). */
+    public AppointmentResponse(UUID id, UUID clinicId, UUID patientId, UUID professionalId, UUID roomId,
+                               String startTime, String endTime, String status, String prontuario, String notes,
+                               String createdAt, String updatedAt) {
+        this(id, clinicId, patientId, professionalId, roomId, startTime, endTime, status, prontuario, notes,
+             createdAt, updatedAt, null, null, null);
+    }
+}

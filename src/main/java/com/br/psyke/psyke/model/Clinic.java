@@ -35,6 +35,7 @@ public class Clinic {
     private String logoUrl;
 
     @Column(columnDefinition = "jsonb")
+    @org.hibernate.annotations.JdbcTypeCode(org.hibernate.type.SqlTypes.JSON)
     @Builder.Default
     private String settings = "{}";
 

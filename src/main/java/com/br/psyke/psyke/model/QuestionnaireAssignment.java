@@ -36,6 +36,7 @@ public class QuestionnaireAssignment {
     private AssignmentStatus status = AssignmentStatus.PENDING;
 
     @Column(columnDefinition = "jsonb")
+    @org.hibernate.annotations.JdbcTypeCode(org.hibernate.type.SqlTypes.JSON)
     private String answers;
 
     @Column(precision = 10, scale = 2)

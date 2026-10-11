@@ -26,13 +26,14 @@ import static org.mockito.Mockito.*;
 class DocumentServiceTest {
 
     @Mock private DocumentRepository documents;
+    @Mock private com.br.psyke.psyke.repository.DocumentContentRepository contents;
     private DocumentService service;
     private UUID clinicId;
     private Document existingDoc;
 
     @BeforeEach
     void setUp() {
-        service = new DocumentService(documents);
+        service = new DocumentService(documents, contents);
         var tmpDir = System.getProperty("java.io.tmpdir") + "/psyke-test";
         ReflectionTestUtils.setField(service, "uploadPath", tmpDir);
         ReflectionTestUtils.invokeMethod(service, "init");

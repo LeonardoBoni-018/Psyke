@@ -1,36 +1,35 @@
 package com.br.psyke.psyke.event;
 
-import com.br.psyke.psyke.model.Patient;
 import com.br.psyke.psyke.repository.PatientRepository;
 import com.br.psyke.psyke.service.EmailService;
 import com.br.psyke.psyke.service.SmsService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Component;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.Locale;
 
+/** Sends SMS/e-mail to the patient when an appointment changes. Invoked with the tenant already bound. */
 @Slf4j
 @Component
 @RequiredArgsConstructor
 public class AppointmentNotifier {
 
+    private static final DateTimeFormatter WHEN =
+            DateTimeFormatter.ofPattern("dd/MM/yyyy 'às' HH:mm", Locale.forLanguageTag("pt-BR"));
+
     private final PatientRepository patients;
     private final EmailService emailService;
     private final SmsService smsService;
 
-    @KafkaListener(topics = "appointment.scheduled")
-    public void onScheduled(AppointmentEvent event) {
-        notifyPatient(event, "agendada");
-    }
-
-    @KafkaListener(topics = "appointment.confirmed")
-    public void onConfirmed(AppointmentEvent event) {
-        notifyPatient(event, "confirmada");
-    }
-
-    @KafkaListener(topics = "appointment.cancelled")
-    public void onCancelled(AppointmentEvent event) {
-        notifyPatient(event, "cancelada");
+    public void handle(AppointmentEvent event) {
+        switch (event.eventType()) {
+            case "scheduled" -> notifyPatient(event, "agendada");
+            case "confirmed" -> notifyPatient(event, "confirmada");
+            case "cancelled" -> notifyPatient(event, "cancelada");
+            default -> { /* no patient notification */ }
+        }
     }
 
     private void notifyPatient(AppointmentEvent event, String status) {
@@ -39,12 +38,20 @@ public class AppointmentNotifier {
             log.warn("Patient {} not found for notification", event.patientId());
             return;
         }
-        var msg = "Sua consulta foi %s para %s.".formatted(status, event.startTime());
-        if (patient.getPhone() != null) {
+        var msg = "Sua consulta foi %s para %s.".formatted(status, format(event.startTime()));
+        if (patient.getPhone() != null && !patient.getPhone().isBlank()) {
             smsService.send(patient.getPhone(), msg);
         }
-        if (patient.getEmail() != null) {
-            emailService.send(patient.getEmail(), "Atualização de Agendamento - Psyke", msg);
+        if (patient.getEmail() != null && !patient.getEmail().isBlank()) {
+            emailService.send(patient.getEmail(), "Atualização de agendamento - Psyke", msg);
+        }
+    }
+
+    private static String format(String isoDateTime) {
+        try {
+            return LocalDateTime.parse(isoDateTime).format(WHEN);
+        } catch (RuntimeException e) {
+            return isoDateTime;
         }
     }
 }

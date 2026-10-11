@@ -17,17 +17,20 @@ services:
       timeout: 5s
       retries: 5
 
+  # Optional: the API only uses Kafka when PSYKE_KAFKA_ENABLED=true.
   kafka:
     image: apache/kafka:4.1.0
     container_name: kafka
+    profiles: ["kafka"]
     environment:
       KAFKA_NODE_ID: 1
       KAFKA_PROCESS_ROLES: broker,controller
       KAFKA_CONTROLLER_QUORUM_VOTERS: 1@localhost:9093
-      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092,CONTROLLER://0.0.0.0:9093
-      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://localhost:9092
-      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,CONTROLLER:PLAINTEXT
-      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      # INTERNAL for containers (kafka:29092), EXTERNAL for the host (localhost:9092)
+      KAFKA_LISTENERS: INTERNAL://0.0.0.0:29092,EXTERNAL://0.0.0.0:9092,CONTROLLER://0.0.0.0:9093
+      KAFKA_ADVERTISED_LISTENERS: INTERNAL://kafka:29092,EXTERNAL://localhost:9092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: INTERNAL:PLAINTEXT,EXTERNAL:PLAINTEXT,CONTROLLER:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: INTERNAL
       KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
       KAFKA_LOG_DIRS: /var/lib/kafka/data
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
@@ -40,7 +43,9 @@ services:
       - kafka-data:/var/lib/kafka/data
 
   psyke-api:
-    build: .
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
     container_name: psyke-api
     ports:
       - "8080:8080"
@@ -51,13 +56,14 @@ services:
       PSYKE_DB_URL: jdbc:postgresql://postgres-db:5432/psyke_master
       PSYKE_DB_USER: postgres
       PSYKE_DB_PASS: 123456
-      PSYKE_KAFKA_BOOTSTRAP_SERVERS: kafka:9092
       PSYKE_JWT_SECRET: dev-secret-que-deve-ter-256-bits-minimo-1234567890
+      PSYKE_FRONTEND_URL: http://localhost:5173
+      # To use Kafka: `docker compose --profile kafka up -d` and set the two lines below.
+      PSYKE_KAFKA_ENABLED: "false"
+      PSYKE_KAFKA_BOOTSTRAP_SERVERS: kafka:29092
     depends_on:
       postgres-db:
         condition: service_healthy
-      kafka:
-        condition: service_started
 
 volumes:
   pgdata:

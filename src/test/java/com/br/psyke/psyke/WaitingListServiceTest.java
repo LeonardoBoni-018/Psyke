@@ -5,7 +5,7 @@ import com.br.psyke.psyke.exception.ResourceNotFoundException;
 import com.br.psyke.psyke.exception.SlotConflictException;
 import com.br.psyke.psyke.model.WaitingList;
 import com.br.psyke.psyke.repository.SlotRepository;
-import com.br.psyke.psyke.repository.UserRepository;
+import com.br.psyke.psyke.repository.PatientRepository;
 import com.br.psyke.psyke.repository.WaitingListRepository;
 import com.br.psyke.psyke.service.WaitingListService;
 import org.junit.jupiter.api.BeforeEach;
@@ -22,7 +22,7 @@ import static org.mockito.Mockito.*;
 class WaitingListServiceTest {
 
     @Mock private WaitingListRepository repo;
-    @Mock private UserRepository userRepo;
+    @Mock private PatientRepository patientRepo;
     @Mock private SlotRepository slotRepo;
     @Mock private AppointmentEventProducer eventProducer;
 
@@ -32,7 +32,7 @@ class WaitingListServiceTest {
 
     @BeforeEach
     void setUp() {
-        service = new WaitingListService(repo, userRepo, slotRepo, eventProducer);
+        service = new WaitingListService(repo, patientRepo, slotRepo, eventProducer);
         waitingEntry = WaitingList.builder().id(UUID.randomUUID())
                 .patientId(UUID.randomUUID()).professionalId(UUID.randomUUID())
                 .priority(0).status(WaitingList.WaitingStatus.WAITING).build();

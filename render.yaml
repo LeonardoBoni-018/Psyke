@@ -1,0 +1,28 @@
+# Render Blueprint for the Psyke API (https://render.com/docs/blueprint-spec).
+# The web app is deployed on Vercel; the database is PostgreSQL (Neon via the Vercel Marketplace,
+# Render Postgres or any managed Postgres). Use the DIRECT connection string (not the "-pooler" one):
+# the API sets search_path per connection for schema-per-tenant isolation.
+services:
+  - type: web
+    name: psyke-api
+    runtime: docker
+    plan: free
+    region: virginia
+    dockerfilePath: ./Dockerfile
+    healthCheckPath: /actuator/health
+    autoDeploy: true
+    envVars:
+      - key: SPRING_PROFILES_ACTIVE
+        value: prod
+      - key: PSYKE_DB_URL
+        sync: false # e.g. postgres://user:pass@ep-xxx.us-east-1.aws.neon.tech/neondb?sslmode=require
+      - key: PSYKE_JWT_SECRET
+        generateValue: true
+      - key: PSYKE_CORS_ORIGINS
+        sync: false # e.g. https://psyke-web.vercel.app,https://psyke-web-*.vercel.app
+      - key: PSYKE_FRONTEND_URL
+        sync: false # e.g. https://psyke-web.vercel.app (used in password-reset e-mails)
+      - key: PSYKE_DB_POOL_SIZE
+        value: "5"
+      - key: PSYKE_KAFKA_ENABLED
+        value: "false"

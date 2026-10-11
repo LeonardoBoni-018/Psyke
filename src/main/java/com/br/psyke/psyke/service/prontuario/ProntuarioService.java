@@ -191,8 +191,14 @@ public class ProntuarioService {
         return AnamneseResponse.from(anamneseRepo.save(anamnese));
     }
 
+    /**
+     * Psychological records are confidential (CFP Resolution 01/2009, LGPD art. 11): only admins and
+     * clinicians may read them. Receptionists manage the schedule, not clinical content.
+     */
     private void checkAccess(UUID patientId, UUID userId, boolean isAdmin, boolean isPatient, boolean isReceptionist) {
-        if (isAdmin || isReceptionist) return;
+        if (isAdmin) return;
+        if (isReceptionist && !isPatient)
+            throw new AccessDeniedException("Receptionists cannot access clinical records");
         if (isPatient && !userId.equals(patientId))
             throw new AccessDeniedException("Patients can only access their own records");
     }

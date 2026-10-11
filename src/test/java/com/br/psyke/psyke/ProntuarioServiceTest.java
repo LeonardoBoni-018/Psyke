@@ -177,12 +177,11 @@ class ProntuarioServiceTest {
     }
 
     @Test
-    void shouldAllowReceptionistViewAnyProntuario() {
+    void shouldDenyReceptionistAccessToClinicalRecord() {
         when(prontuarioRepo.findById(prontuario.getId())).thenReturn(Optional.of(prontuario));
 
-        var resp = service.findById(prontuario.getId(), otherUserId, false, false, true);
-
-        assertThat(resp.id()).isEqualTo(prontuario.getId());
+        assertThatThrownBy(() -> service.findById(prontuario.getId(), otherUserId, false, false, true))
+                .isInstanceOf(org.springframework.security.access.AccessDeniedException.class);
     }
 
     @Test

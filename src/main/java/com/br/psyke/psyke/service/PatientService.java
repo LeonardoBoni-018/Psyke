@@ -9,7 +9,10 @@ import com.br.psyke.psyke.model.Patient;
 import com.br.psyke.psyke.repository.PatientRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.util.UUID;
@@ -22,6 +25,30 @@ public class PatientService {
 
     public Page<PatientResponse> findAll(UUID clinicId, Pageable pageable) {
         return patients.findByClinicId(clinicId, pageable).map(this::toResponse);
+    }
+
+    /** Server-side search by name, e-mail, CPF or phone, optionally filtered by status. */
+    public Page<PatientResponse> search(UUID clinicId, String query, String status, Pageable pageable) {
+        Specification<Patient> spec = (root, cq, cb) -> cb.equal(root.get("clinicId"), clinicId);
+        if (status != null && !status.isBlank()) {
+            var st = Patient.PatientStatus.valueOf(status.trim().toUpperCase(java.util.Locale.ROOT));
+            spec = spec.and((root, cq, cb) -> cb.equal(root.get("status"), st));
+        }
+        if (query != null && !query.isBlank()) {
+            var term = "%" + query.trim().toLowerCase(java.util.Locale.ROOT)
+                    .replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_") + "%";
+            var digits = query.replaceAll("\\D", "");
+            spec = spec.and((root, cq, cb) -> {
+                var byName = cb.like(cb.lower(root.get("fullName")), term, '\\');
+                var byEmail = cb.like(cb.lower(root.get("email")), term, '\\');
+                if (digits.length() < 3) return cb.or(byName, byEmail);
+                var digitTerm = "%" + digits + "%";
+                return cb.or(byName, byEmail, cb.like(root.get("cpf"), digitTerm), cb.like(root.get("phone"), digitTerm));
+            });
+        }
+        var sorted = pageable.getSort().isSorted() ? pageable
+                : PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), Sort.by("fullName"));
+        return patients.findAll(spec, sorted).map(this::toResponse);
     }
 
     public PatientResponse findById(UUID id, UUID clinicId) {

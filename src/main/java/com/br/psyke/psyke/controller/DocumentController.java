@@ -46,13 +46,13 @@ public class DocumentController {
     @GetMapping("/{id}/download")
     @Operation(summary = "Download document file")
     public ResponseEntity<Resource> download(@PathVariable UUID id) {
-        var clinicId = UUID.fromString(TenantContext.getClinicId());
-        var resource = service.download(id, clinicId);
-        var filename = service.getOriginalFilename(id, clinicId);
+        var file = service.download(id, UUID.fromString(TenantContext.getClinicId()));
         return ResponseEntity.ok()
-                .contentType(MediaType.APPLICATION_OCTET_STREAM)
-                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + filename + "\"")
-                .body(resource);
+                .contentType(MediaType.parseMediaType(file.contentType()))
+                .header(HttpHeaders.CONTENT_DISPOSITION, org.springframework.http.ContentDisposition.attachment()
+                        .filename(file.filename(), java.nio.charset.StandardCharsets.UTF_8).build().toString())
+                .header("X-Content-Type-Options", "nosniff")
+                .body(file.resource());
     }
 
     @PostMapping("/upload")

@@ -49,9 +49,11 @@ public class SlotEngine {
 
             if (exception == null) {
                 var dayOfWeek = dateCursor.getDayOfWeek().getValue() % 7;
-                var avail = findAvailabilityForDay(weekly, dayOfWeek);
-                if (avail != null) {
-                    generateSlotsForDay(dateCursor, avail, sessionDuration, bookedTimes, result);
+                // A professional may have several windows on the same weekday (e.g. morning and afternoon).
+                for (var avail : weekly) {
+                    if (avail.getDayOfWeek() == dayOfWeek) {
+                        generateSlotsForDay(dateCursor, avail, sessionDuration, bookedTimes, result);
+                    }
                 }
             } else if (exception.getType() == AvailabilityException.ExceptionType.EXTRA_HOUR && exception.getStartTime() != null && exception.getEndTime() != null) {
                 generateSlotsForRange(dateCursor, exception.getStartTime(), exception.getEndTime(), sessionDuration, bookedTimes, result);
@@ -60,19 +62,13 @@ public class SlotEngine {
             dateCursor = dateCursor.plusDays(1);
         }
 
+        result.sort(null);
         return result;
     }
 
     private AvailabilityException findExceptionForDate(List<AvailabilityException> exceptions, LocalDate date) {
         for (var e : exceptions) {
             if (e.getExceptionDate().equals(date)) return e;
-        }
-        return null;
-    }
-
-    private ProfessionalAvailability findAvailabilityForDay(List<ProfessionalAvailability> availabilities, int dayOfWeek) {
-        for (var a : availabilities) {
-            if (a.getDayOfWeek() == dayOfWeek) return a;
         }
         return null;
     }

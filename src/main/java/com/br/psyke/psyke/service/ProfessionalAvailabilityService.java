@@ -24,9 +24,14 @@ public class ProfessionalAvailabilityService {
     private final SlotEngine slotEngine;
 
     public List<SlotResponse> getSlots(UUID professionalId, LocalDate from, LocalDate to, Integer duration) {
-        var freeSlots = slotEngine.generateFreeSlots(professionalId, from, to, duration);
-        return freeSlots.stream()
-                .map(dt -> new SlotResponse(null, professionalId, dt.toString(), dt.plusMinutes(duration != null ? duration : 50).toString(), "FREE"))
+        if (to.isBefore(from) || from.plusDays(62).isBefore(to))
+            throw new IllegalArgumentException("Período inválido: use no máximo 62 dias");
+        var weekly = availabilityRepo.findByProfessionalIdAndActiveTrueOrderByDayOfWeek(professionalId);
+        int minutes = duration != null ? duration : weekly.isEmpty() ? 50 : weekly.get(0).getSessionDuration();
+        var now = java.time.LocalDateTime.now();
+        return slotEngine.generateFreeSlots(professionalId, from, to, minutes).stream()
+                .filter(dt -> dt.isAfter(now))
+                .map(dt -> new SlotResponse(null, professionalId, dt.toString(), dt.plusMinutes(minutes).toString(), "FREE"))
                 .toList();
     }
 

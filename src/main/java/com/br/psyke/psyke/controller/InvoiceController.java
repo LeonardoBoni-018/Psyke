@@ -44,7 +44,7 @@ public class InvoiceController {
     }
 
     @PostMapping
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'RECEPTIONIST')")
     @Operation(summary = "Create a new invoice (admin only)")
     public ResponseEntity<InvoiceResponse> create(@Valid @RequestBody CreateInvoiceRequest req) {
         return ResponseEntity.status(HttpStatus.CREATED)
@@ -52,7 +52,7 @@ public class InvoiceController {
     }
 
     @PutMapping("/{id}")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'RECEPTIONIST')")
     @Operation(summary = "Update an existing invoice (admin only)")
     public ResponseEntity<InvoiceResponse> update(
             @PathVariable UUID id,

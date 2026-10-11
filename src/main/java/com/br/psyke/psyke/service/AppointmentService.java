@@ -14,14 +14,17 @@ import com.br.psyke.psyke.exception.SlotConflictException;
 import com.br.psyke.psyke.model.Appointment;
 import com.br.psyke.psyke.model.Slot;
 import com.br.psyke.psyke.repository.AppointmentRepository;
+import com.br.psyke.psyke.repository.PatientRepository;
+import com.br.psyke.psyke.repository.ProfessionalRepository;
 import com.br.psyke.psyke.repository.RoomRepository;
 import com.br.psyke.psyke.repository.SlotRepository;
-import com.br.psyke.psyke.repository.UserRepository;
 import com.br.psyke.psyke.security.TenantContext;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
+import java.time.ZoneId;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -39,17 +42,19 @@ public class AppointmentService {
         Appointment.AppointmentStatus.DONE, Set.of()
     );
 
+    /** Matches the web app palette (dark theme). */
     private static final Map<Appointment.AppointmentStatus, String> CALENDAR_COLORS = Map.of(
-        Appointment.AppointmentStatus.SCHEDULED, "#3788d8",
-        Appointment.AppointmentStatus.CONFIRMED, "#28a745",
-        Appointment.AppointmentStatus.CANCELLED, "#6c757d",
-        Appointment.AppointmentStatus.NO_SHOW, "#fd7e14",
-        Appointment.AppointmentStatus.DONE, "#20c997"
+        Appointment.AppointmentStatus.SCHEDULED, "#f5a623",
+        Appointment.AppointmentStatus.CONFIRMED, "#0ec4a0",
+        Appointment.AppointmentStatus.CANCELLED, "#4a6478",
+        Appointment.AppointmentStatus.NO_SHOW, "#e05555",
+        Appointment.AppointmentStatus.DONE, "#8fa8b8"
     );
 
     private final AppointmentRepository appointmentRepo;
     private final SlotRepository slotRepo;
-    private final UserRepository userRepo;
+    private final ProfessionalRepository professionalRepo;
+    private final PatientRepository patientRepo;
     private final RoomRepository roomRepo;
     private final AppointmentEventProducer eventProducer;
     private final SessionEventProducer sessionEventProducer;
@@ -57,39 +62,48 @@ public class AppointmentService {
     private final SlotEngine slotEngine;
 
     public List<AppointmentResponse> findAll(UUID professionalId, UUID patientId, Appointment.AppointmentStatus status, LocalDateTime from, LocalDateTime to) {
-        return appointmentRepo.findAllByFilters(professionalId, patientId, status, from, to)
-                .stream().map(this::toResponse).toList();
+        // Unbounded listing would load the whole table (OWASP API4): require a patient or a bounded period.
+        if (patientId == null && (from == null || to == null))
+            throw new IllegalArgumentException("Informe patientId ou o período (from e to)");
+        if (patientId == null && from.plusDays(366).isBefore(to))
+            throw new IllegalArgumentException("Período máximo de 366 dias");
+        return toResponses(appointmentRepo.findAllByFilters(professionalId, patientId, status, from, to));
     }
 
     public List<CalendarEvent> findCalendarEvents(UUID professionalId, LocalDateTime from, LocalDateTime to) {
-        var clinicId = TenantContext.getClinicId() != null
+        if (from.plusDays(62).isBefore(to))
+            throw new IllegalArgumentException("Período máximo de 62 dias no calendário");
+        var clinicId = TenantContext.getClinicId() != null && !TenantContext.getClinicId().isBlank()
                 ? UUID.fromString(TenantContext.getClinicId()) : null;
 
-        var appointments = professionalId != null
+        var appointments = (professionalId != null
             ? appointmentRepo.findByProfessionalIdAndStartTimeBetweenOrderByStartTime(professionalId, from, to)
-            : appointmentRepo.findAllByFilters(null, null, null, from, to);
+            : appointmentRepo.findAllByFilters(null, null, null, from, to))
+            .stream().filter(a -> clinicId == null || clinicId.equals(a.getClinicId())).toList();
+        var names = loadNames(appointments);
 
-        return appointments.stream()
-            .filter(a -> clinicId == null || clinicId.equals(a.getClinicId()))
-            .map(a -> {
-                var color = CALENDAR_COLORS.getOrDefault(a.getStatus(), "#3788d8");
-                var title = (a.getNotes() != null && !a.getNotes().isBlank())
-                        ? a.getNotes()
-                        : a.getStatus().name();
-                return new CalendarEvent(a.getId(), title,
+        return appointments.stream().map(a -> {
+                var color = CALENDAR_COLORS.getOrDefault(a.getStatus(), "#4a9eff");
+                var patientName = names.patients().getOrDefault(a.getPatientId(), "Paciente");
+                var props = new java.util.HashMap<String, Object>();
+                props.put("status", a.getStatus().name());
+                props.put("patientId", a.getPatientId().toString());
+                props.put("patientName", patientName);
+                props.put("professionalId", a.getProfessionalId().toString());
+                props.put("professionalName", names.professionals().getOrDefault(a.getProfessionalId(), ""));
+                props.put("roomId", a.getRoomId() != null ? a.getRoomId().toString() : "");
+                props.put("notes", a.getNotes() != null ? a.getNotes() : "");
+                return new CalendarEvent(a.getId(), patientName,
                     a.getStartTime().toString(), a.getEndTime().toString(),
-                    color, color, "#ffffff",
-                    Map.of("status", a.getStatus().name(), "patientId", a.getPatientId().toString(),
-                           "professionalId", a.getProfessionalId().toString(),
-                           "roomId", a.getRoomId() != null ? a.getRoomId().toString() : ""));
+                    color, color, "#080c0f", props);
             }).toList();
     }
 
     @Transactional
     public AppointmentResponse create(AppointmentRequest req) {
-        var professional = userRepo.findById(req.professionalId())
+        var professional = professionalRepo.findById(req.professionalId())
                 .orElseThrow(() -> new ResourceNotFoundException("Professional not found"));
-        userRepo.findById(req.patientId())
+        patientRepo.findById(req.patientId())
                 .orElseThrow(() -> new ResourceNotFoundException("Patient not found"));
 
         var date = req.startTime().toLocalDate();
@@ -149,7 +163,7 @@ public class AppointmentService {
                 appointment.getStartTime().toString(), appointment.getEndTime().toString(),
                 appointment.getStatus().name(), LocalDateTime.now()));
 
-        return toResponse(appointment);
+        return toDetailedResponse(appointment);
     }
 
     @Transactional
@@ -175,6 +189,7 @@ public class AppointmentService {
             slotRepo.saveAll(slots);
             cancellationLogService.log(appointment.getId(), appointment.getPatientId(), reason, "SYSTEM");
         }
+        if (target == Appointment.AppointmentStatus.DONE) recordPatientVisit(appointment);
 
         var eventType = switch (target) {
             case CONFIRMED -> "confirmed";
@@ -187,7 +202,19 @@ public class AppointmentService {
                 appointment.getStartTime().toString(), appointment.getEndTime().toString(),
                 appointment.getStatus().name(), LocalDateTime.now()));
 
-        return toResponse(appointment);
+        return toDetailedResponse(appointment);
+    }
+
+    /** Keeps the patient's first/last appointment dates in sync when a session is completed. */
+    private void recordPatientVisit(Appointment appointment) {
+        var visit = appointment.getStartTime().atZone(ZoneId.systemDefault()).toOffsetDateTime();
+        patientRepo.findById(appointment.getPatientId()).ifPresent(patient -> {
+            OffsetDateTime first = patient.getFirstAppointment();
+            OffsetDateTime last = patient.getLastAppointment();
+            if (first == null || visit.isBefore(first)) patient.setFirstAppointment(visit);
+            if (last == null || visit.isAfter(last)) patient.setLastAppointment(visit);
+            patientRepo.save(patient);
+        });
     }
 
     @Transactional
@@ -200,6 +227,7 @@ public class AppointmentService {
         appointment.setStatus(Appointment.AppointmentStatus.DONE);
         if (prontuario != null) appointment.setProntuario(prontuario);
         appointment = appointmentRepo.save(appointment);
+        recordPatientVisit(appointment);
 
         sessionEventProducer.publish(new SessionEvent(appointment.getId(),
                 appointment.getClinicId(), appointment.getPatientId(),
@@ -207,11 +235,11 @@ public class AppointmentService {
                 appointment.getStartTime().toString(), appointment.getEndTime().toString(),
                 appointment.getNotes(), appointment.getProntuario(), LocalDateTime.now()));
 
-        return toResponse(appointment);
+        return toDetailedResponse(appointment);
     }
 
     public AppointmentResponse findById(UUID id) {
-        return appointmentRepo.findById(id).map(this::toResponse)
+        return appointmentRepo.findById(id).map(this::toDetailedResponse)
                 .orElseThrow(() -> new ResourceNotFoundException("Appointment not found"));
     }
 
@@ -228,7 +256,7 @@ public class AppointmentService {
         if (req.notes() != null) appointment.setNotes(req.notes());
 
         appointment = appointmentRepo.save(appointment);
-        return toResponse(appointment);
+        return toDetailedResponse(appointment);
     }
 
     @Transactional
@@ -249,6 +277,44 @@ public class AppointmentService {
 
         cancellationLogService.log(appointment.getId(), appointment.getPatientId(), "Appointment deleted", "SYSTEM");
         appointmentRepo.delete(appointment);
+    }
+
+    private record Names(Map<UUID, String> patients, Map<UUID, String> professionals, Map<UUID, String> rooms) {}
+
+    /** Batch-loads display names: three queries per page instead of three per row (no N+1). */
+    private Names loadNames(List<Appointment> appointments) {
+        if (appointments.isEmpty()) return new Names(Map.of(), Map.of(), Map.of());
+        var patientIds = appointments.stream().map(Appointment::getPatientId).collect(java.util.stream.Collectors.toSet());
+        var professionalIds = appointments.stream().map(Appointment::getProfessionalId).collect(java.util.stream.Collectors.toSet());
+        var roomIds = appointments.stream().map(Appointment::getRoomId).filter(java.util.Objects::nonNull)
+                .collect(java.util.stream.Collectors.toSet());
+        var patients = new java.util.HashMap<UUID, String>();
+        patientRepo.findAllById(patientIds).forEach(p -> patients.put(p.getId(), p.getFullName()));
+        var professionals = new java.util.HashMap<UUID, String>();
+        professionalRepo.findAllById(professionalIds).forEach(p -> professionals.put(p.getId(), p.getFullName()));
+        var rooms = new java.util.HashMap<UUID, String>();
+        if (!roomIds.isEmpty()) roomRepo.findAllById(roomIds).forEach(r -> rooms.put(r.getId(), r.getName()));
+        return new Names(patients, professionals, rooms);
+    }
+
+    private List<AppointmentResponse> toResponses(List<Appointment> appointments) {
+        var names = loadNames(appointments);
+        return appointments.stream().map(a -> withNames(a, names)).toList();
+    }
+
+    private AppointmentResponse toDetailedResponse(Appointment a) {
+        return withNames(a, loadNames(List.of(a)));
+    }
+
+    private AppointmentResponse withNames(Appointment a, Names names) {
+        return new AppointmentResponse(a.getId(), a.getClinicId(), a.getPatientId(),
+                a.getProfessionalId(), a.getRoomId(),
+                a.getStartTime().toString(), a.getEndTime().toString(),
+                a.getStatus().name(), a.getProntuario(), a.getNotes(),
+                a.getCreatedAt().toString(), a.getUpdatedAt().toString(),
+                names.patients().get(a.getPatientId()),
+                names.professionals().get(a.getProfessionalId()),
+                a.getRoomId() != null ? names.rooms().get(a.getRoomId()) : null);
     }
 
     private AppointmentResponse toResponse(Appointment a) {

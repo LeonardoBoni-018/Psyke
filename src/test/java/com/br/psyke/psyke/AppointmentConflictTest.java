@@ -34,7 +34,8 @@ class AppointmentConflictTest {
 
     @Mock private AppointmentRepository appointmentRepo;
     @Mock private SlotRepository slotRepo;
-    @Mock private UserRepository userRepo;
+    @Mock private ProfessionalRepository professionalRepo;
+    @Mock private PatientRepository patientRepo;
     @Mock private RoomRepository roomRepo;
     @Mock private AppointmentEventProducer eventProducer;
     @Mock private SessionEventProducer sessionEventProducer;
@@ -44,23 +45,19 @@ class AppointmentConflictTest {
 
     private AppointmentService service;
     private PasswordEncoder encoder;
-    private User professional;
-    private User patient;
+    private Professional professional;
+    private Patient patient;
     private Room room;
     private LocalDateTime now;
 
     @BeforeEach
     void setUp() {
         encoder = new BCryptPasswordEncoder();
-        service = new AppointmentService(appointmentRepo, slotRepo, userRepo, roomRepo, eventProducer, sessionEventProducer, cancellationLogService, slotEngine);
+        service = new AppointmentService(appointmentRepo, slotRepo, professionalRepo, patientRepo, roomRepo, eventProducer, sessionEventProducer, cancellationLogService, slotEngine);
 
         var clinicId = UUID.randomUUID();
-        professional = User.builder().id(UUID.randomUUID()).clinicId(clinicId)
-                .fullName("Prof").email("prof@test.com").passwordHash(encoder.encode("pass"))
-                .active(true).build();
-        patient = User.builder().id(UUID.randomUUID()).clinicId(clinicId)
-                .fullName("Patient").email("pat@test.com").passwordHash(encoder.encode("pass"))
-                .active(true).build();
+        professional = Professional.builder().id(UUID.randomUUID()).clinicId(clinicId).fullName("Prof").crp("06/00001").sessionDuration(50).active(true).build();
+        patient = Patient.builder().id(UUID.randomUUID()).clinicId(clinicId).fullName("Patient").build();
         room = Room.builder().id(UUID.randomUUID()).clinicId(clinicId).name("Room 1").active(true).build();
         now = LocalDateTime.now();
     }
@@ -79,8 +76,8 @@ class AppointmentConflictTest {
         var req = new AppointmentRequest(patient.getId(), professional.getId(), room.getId(), start, end, "Test");
         var saved = savedAppointment(req, Appointment.AppointmentStatus.SCHEDULED);
 
-        when(userRepo.findById(professional.getId())).thenReturn(Optional.of(professional));
-        when(userRepo.findById(patient.getId())).thenReturn(Optional.of(patient));
+        when(professionalRepo.findById(professional.getId())).thenReturn(Optional.of(professional));
+        when(patientRepo.findById(patient.getId())).thenReturn(Optional.of(patient));
         when(roomRepo.findById(room.getId())).thenReturn(Optional.of(room));
         when(slotEngine.generateFreeSlots(professional.getId(), start.toLocalDate(), start.toLocalDate(), null))
                 .thenReturn(List.of(start));
@@ -102,8 +99,8 @@ class AppointmentConflictTest {
         var start = LocalDateTime.now().plusDays(1).withHour(10).withMinute(0);
         var end = start.plusMinutes(50);
 
-        when(userRepo.findById(professional.getId())).thenReturn(Optional.of(professional));
-        when(userRepo.findById(patient.getId())).thenReturn(Optional.of(patient));
+        when(professionalRepo.findById(professional.getId())).thenReturn(Optional.of(professional));
+        when(patientRepo.findById(patient.getId())).thenReturn(Optional.of(patient));
         when(slotEngine.generateFreeSlots(professional.getId(), start.toLocalDate(), start.toLocalDate(), null))
                 .thenReturn(List.of());
 
@@ -120,8 +117,8 @@ class AppointmentConflictTest {
         var existing = Appointment.builder().id(UUID.randomUUID()).professionalId(professional.getId())
                 .startTime(start).endTime(end).status(Appointment.AppointmentStatus.SCHEDULED).build();
 
-        when(userRepo.findById(professional.getId())).thenReturn(Optional.of(professional));
-        when(userRepo.findById(patient.getId())).thenReturn(Optional.of(patient));
+        when(professionalRepo.findById(professional.getId())).thenReturn(Optional.of(professional));
+        when(patientRepo.findById(patient.getId())).thenReturn(Optional.of(patient));
         when(slotEngine.generateFreeSlots(professional.getId(), start.toLocalDate(), start.toLocalDate(), null))
                 .thenReturn(List.of(start));
         when(appointmentRepo.findConflictingByProfessional(professional.getId(), start, end))
@@ -140,8 +137,8 @@ class AppointmentConflictTest {
         var existing = Appointment.builder().id(UUID.randomUUID()).roomId(room.getId())
                 .startTime(start).endTime(end).status(Appointment.AppointmentStatus.CONFIRMED).build();
 
-        when(userRepo.findById(professional.getId())).thenReturn(Optional.of(professional));
-        when(userRepo.findById(patient.getId())).thenReturn(Optional.of(patient));
+        when(professionalRepo.findById(professional.getId())).thenReturn(Optional.of(professional));
+        when(patientRepo.findById(patient.getId())).thenReturn(Optional.of(patient));
         when(slotEngine.generateFreeSlots(professional.getId(), start.toLocalDate(), start.toLocalDate(), null))
                 .thenReturn(List.of(start));
         when(appointmentRepo.findConflictingByProfessional(professional.getId(), start, end))
@@ -161,7 +158,7 @@ class AppointmentConflictTest {
         var start = LocalDateTime.now().plusDays(1).withHour(15).withMinute(0);
         var end = start.plusMinutes(50);
 
-        when(userRepo.findById(professional.getId())).thenReturn(Optional.empty());
+        when(professionalRepo.findById(professional.getId())).thenReturn(Optional.empty());
 
         var req = new AppointmentRequest(patient.getId(), professional.getId(), room.getId(), start, end, "No prof");
         assertThatThrownBy(() -> service.create(req))
@@ -176,8 +173,8 @@ class AppointmentConflictTest {
         var req = new AppointmentRequest(patient.getId(), professional.getId(), room.getId(), start, end, "Pub");
         var saved = savedAppointment(req, Appointment.AppointmentStatus.SCHEDULED);
 
-        when(userRepo.findById(professional.getId())).thenReturn(Optional.of(professional));
-        when(userRepo.findById(patient.getId())).thenReturn(Optional.of(patient));
+        when(professionalRepo.findById(professional.getId())).thenReturn(Optional.of(professional));
+        when(patientRepo.findById(patient.getId())).thenReturn(Optional.of(patient));
         when(roomRepo.findById(room.getId())).thenReturn(Optional.of(room));
         when(slotEngine.generateFreeSlots(professional.getId(), start.toLocalDate(), start.toLocalDate(), null))
                 .thenReturn(List.of(start));
@@ -200,8 +197,8 @@ class AppointmentConflictTest {
         var req = new AppointmentRequest(patient.getId(), professional.getId(), null, start, end, "No room");
         var saved = savedAppointment(req, Appointment.AppointmentStatus.SCHEDULED);
 
-        when(userRepo.findById(professional.getId())).thenReturn(Optional.of(professional));
-        when(userRepo.findById(patient.getId())).thenReturn(Optional.of(patient));
+        when(professionalRepo.findById(professional.getId())).thenReturn(Optional.of(professional));
+        when(patientRepo.findById(patient.getId())).thenReturn(Optional.of(patient));
         when(slotEngine.generateFreeSlots(professional.getId(), start.toLocalDate(), start.toLocalDate(), null))
                 .thenReturn(List.of(start));
         when(appointmentRepo.findConflictingByProfessional(professional.getId(), start, end))

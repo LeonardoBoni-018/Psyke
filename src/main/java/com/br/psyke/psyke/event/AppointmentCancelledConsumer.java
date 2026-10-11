@@ -5,11 +5,11 @@ import com.br.psyke.psyke.repository.SlotRepository;
 import com.br.psyke.psyke.service.WaitingListService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
 
+/** Frees the slot of a cancelled appointment and offers it to the waiting list. */
 @Slf4j
 @Component
 @RequiredArgsConstructor
@@ -18,10 +18,9 @@ public class AppointmentCancelledConsumer {
     private final SlotRepository slotRepo;
     private final WaitingListService waitingListService;
 
-    @KafkaListener(topics = "appointment.cancelled")
     @Transactional
     public void onCancelled(AppointmentEvent event) {
-        log.info("Received cancelled event for appointment {}", event.appointmentId());
+        log.info("Processing cancellation of appointment {}", event.appointmentId());
 
         var start = LocalDateTime.parse(event.startTime());
         var end = LocalDateTime.parse(event.endTime());

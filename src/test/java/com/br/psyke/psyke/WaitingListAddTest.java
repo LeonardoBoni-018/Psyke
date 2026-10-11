@@ -7,7 +7,7 @@ import com.br.psyke.psyke.exception.SlotConflictException;
 import com.br.psyke.psyke.model.User;
 import com.br.psyke.psyke.model.WaitingList;
 import com.br.psyke.psyke.repository.SlotRepository;
-import com.br.psyke.psyke.repository.UserRepository;
+import com.br.psyke.psyke.repository.PatientRepository;
 import com.br.psyke.psyke.repository.WaitingListRepository;
 import com.br.psyke.psyke.service.WaitingListService;
 import org.junit.jupiter.api.BeforeEach;
@@ -26,7 +26,7 @@ import static org.mockito.Mockito.*;
 class WaitingListAddTest {
 
     @Mock private WaitingListRepository repo;
-    @Mock private UserRepository userRepo;
+    @Mock private PatientRepository patientRepo;
     @Mock private SlotRepository slotRepo;
     @Mock private AppointmentEventProducer eventProducer;
 
@@ -36,21 +36,21 @@ class WaitingListAddTest {
 
     @BeforeEach
     void setUp() {
-        service = new WaitingListService(repo, userRepo, slotRepo, eventProducer);
+        service = new WaitingListService(repo, patientRepo, slotRepo, eventProducer);
         patientId = UUID.randomUUID();
         professionalId = UUID.randomUUID();
     }
 
     @Test
     void shouldAddToWaitingList() {
-        var patient = User.builder().id(patientId).fullName("Patient").active(true).build();
+        var patient = com.br.psyke.psyke.model.Patient.builder().id(patientId).fullName("Patient").build();
         var now = OffsetDateTime.now();
         var saved = WaitingList.builder().id(UUID.randomUUID())
                 .patientId(patientId).professionalId(professionalId)
                 .priority(0).status(WaitingList.WaitingStatus.WAITING)
                 .requestedAt(now).build();
 
-        when(userRepo.findById(patientId)).thenReturn(Optional.of(patient));
+        when(patientRepo.findById(patientId)).thenReturn(Optional.of(patient));
         when(repo.findByPatientIdAndProfessionalIdAndStatus(patientId, professionalId, WaitingList.WaitingStatus.WAITING))
                 .thenReturn(Optional.empty());
         when(repo.save(any())).thenReturn(saved);
@@ -65,7 +65,7 @@ class WaitingListAddTest {
 
     @Test
     void shouldThrowWhenPatientNotFound() {
-        when(userRepo.findById(patientId)).thenReturn(Optional.empty());
+        when(patientRepo.findById(patientId)).thenReturn(Optional.empty());
 
         var req = new WaitingListRequest(patientId, professionalId, 0);
         assertThatThrownBy(() -> service.join(req))
@@ -75,12 +75,12 @@ class WaitingListAddTest {
 
     @Test
     void shouldThrowWhenPatientAlreadyInList() {
-        var patient = User.builder().id(patientId).fullName("Patient").active(true).build();
+        var patient = com.br.psyke.psyke.model.Patient.builder().id(patientId).fullName("Patient").build();
         var existing = WaitingList.builder().id(UUID.randomUUID())
                 .patientId(patientId).professionalId(professionalId)
                 .status(WaitingList.WaitingStatus.WAITING).build();
 
-        when(userRepo.findById(patientId)).thenReturn(Optional.of(patient));
+        when(patientRepo.findById(patientId)).thenReturn(Optional.of(patient));
         when(repo.findByPatientIdAndProfessionalIdAndStatus(patientId, professionalId, WaitingList.WaitingStatus.WAITING))
                 .thenReturn(Optional.of(existing));
 
